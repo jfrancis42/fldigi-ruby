@@ -81,117 +81,16 @@
        sixty seconds, then repeat forever.  If/when I get an answer, I
        just ^C the script, and move over to FLDigi for the QSO.</p>
 
-    <p>In the mean time, here are links to the library and the demo
-      code (make sure you always have the latest library, or the demo
-      code may not work):</p>
+    <p>In the mean time, here are links to the goodies:</p>
 
     <ul>
       <li><a href="https://rubygems.org/gems/fldigi">Here</a> is where
-	you can get the library.  Or just do <i>sudo gem install
-	  fldigi</i> from the command line.</li>
-      <li><a href="digitool.rb">digitool.rb</a> is a simple client for
-	sending CQ and one-line text strings (and setting the radio
-	parameters)</li>
-      <li><a href="propnet.rb">propnet.rb</a> is an <b>untested</b>
-	client for PropNet</li>
-      <li>hfaprs.rb</li>
+	you can get the gem.  Or just do <i>sudo gem install
+	fldigi</i> from the command line.</li>
+      <li><a href="https://github.com/jfrancis42/fldigi-ruby">This</a>
+	is the full github repository, including the example/demo
+	code.</li>
     </ul>
-
-    Here's a simple example to call CQ where you specify the dial
-    frequency and the desired carrier.  This example will transmit on
-    14071000hz:
-    <p>
-      <pre>
-	<code>
-	  require 'fldigi'
-
-	  fldigi=Fldigi.new()
-	  fldigi.call="N0CLU"
-	  fldigi.carrier=1000
-	  fldigi.dial_freq=14070000
-	  fldigi.modem="BPSK31"
-	  if fldigi.config()
-	    fldigi.clear_tx_data()
-	    fldigi.get_tx_data()
-	    fldigi.cq()
-	    fldigi.send_buffer()
-	  end
-	</code>
-      </pre>
-    </p>
-
-    Here's a different way to do the same thing.  This time, we
-    specify the desired transmit frequency, rather than specifying the
-    dial frequency (just set fldigi.carrier to the sweet spot in your
-    audio first).  This example also transmits on 14071000hz, it's
-    just a different way of doing the same thing:
-    <p>
-      <pre>
-	<code>
-	  require 'fldigi'
-
-	  fldigi=Fldigi.new()
-	  fldigi.call="N0CLU"
-	  fldigi.carrier=1000
-	  fldigi.freq(14071000)
-	  fldigi.modem="BPSK31"
-	  if fldigi.config()
-	    fldigi.clear_tx_data()
-	    fldigi.get_tx_data()
-	    fldigi.cq()
-	    fldigi.send_buffer()
-	  end
-	</code>
-      </pre>
-    </p>
-
-    Here's a simple example to send a random bit of text:
-    <p>
-      <pre>
-	<code>
-	  require 'fldigi'
-
-	  fldigi=Fldigi.new()
-	  fldigi.dial_freq=18110000
-	  fldigi.carrier=1200
-	  fldigi.modem="BPSK63"
-	  if fldigi.config()
-	    fldigi.clear_tx_data()
-	    fldigi.get_tx_data()
-	    fldigi.add_tx_string("This is a random bit of text de N0CLU")
-	    fldigi.send_buffer()
-	  end
-	</code>
-      </pre>
-    </p>
-
-    Here's a simple example to send a PropNet beacon:
-    <p>
-      <pre>
-	<code>
-	  require 'fldigi'
-
-	  fldigi=Fldigi.new()
-	  fldigi.call="N0CLU"
-	  fldigi.band=20
-	  fldigi.phg="PHG410015"
-	  fldigi.grid="CN87wu"
-	  fldigi.propnet()
-	  if fldigi.config()
-	    fldigi.clear_tx_data()
- 	    fldigi.get_tx_data()
-	    while true
-	      fldigi.send_buffer()
- 	      sleep fldigi.delay
-	    end
-	  end
-	</code>
-      </pre>
-    </p>
-
-    <p>
-      The full git source repository lives <a href="https://github.com/jfrancis42/fldigi-ruby">here</a>.
-    </p>
 
     <p>Best of luck, 73.</p>
     <p>Jeff Francis, N0GQ, jeff(at)gritch.org</p>

@@ -148,9 +148,90 @@ asked like this:
 puts get_rx_data()
 ```
 
-If you look at digitool.rb, there are working example of all of this
-and more.  There are also (at least for the moment) more examples on
-the [fldigi-ruby home page](http://fldigi.gritch.org)
+Here's a simple example to call CQ where you specify the dial
+frequency and the desired carrier.  This example will transmit on
+14071000hz:
+
+```ruby
+require 'fldigi'
+
+  fldigi=Fldigi.new()
+  fldigi.call="N0CLU"
+  fldigi.carrier=1000
+  fldigi.dial_freq=14070000
+  fldigi.modem="BPSK31"
+  if fldigi.config()
+    fldigi.clear_tx_data()
+    fldigi.get_tx_data()
+    fldigi.cq()
+    fldigi.send_buffer()
+  end
+```
+
+Here's a different way to do the same thing.  This time, we specify
+the desired transmit frequency, rather than specifying the dial
+frequency (just set fldigi.carrier to the sweet spot in your audio
+first).  This example also transmits on 14071000hz, it's just a
+different way of doing the same thing:
+
+```ruby
+  require 'fldigi'
+
+  fldigi=Fldigi.new()
+  fldigi.call="N0CLU"
+  fldigi.carrier=1000
+  fldigi.freq(14071000)
+  fldigi.modem="BPSK31"
+  if fldigi.config()
+    fldigi.clear_tx_data()
+    fldigi.get_tx_data()
+    fldigi.cq()
+    fldigi.send_buffer()
+  end
+```
+
+Here's a simple example to send a random bit of text:
+
+```ruby
+  require 'fldigi'
+
+  fldigi=Fldigi.new()
+  fldigi.dial_freq=18110000
+  fldigi.carrier=1200
+  fldigi.modem="BPSK63"
+  if fldigi.config()
+    fldigi.clear_tx_data()
+    fldigi.get_tx_data()
+    fldigi.add_tx_string("This is a random bit of text de N0CLU")
+    fldigi.send_buffer()
+  end
+```
+
+Here's a simple example to send a PropNet beacon (note that PropNet
+functionality is untested):
+
+```ruby
+  require 'fldigi'
+
+  fldigi=Fldigi.new()
+  fldigi.call="N0CLU"
+  fldigi.band=20
+  fldigi.phg="PHG410015"
+  fldigi.grid="CN87wu"
+  fldigi.propnet()
+  if fldigi.config()
+    fldigi.clear_tx_data()
+    fldigi.get_tx_data()
+    while true
+      fldigi.send_buffer()
+      sleep fldigi.delay
+    end
+  end
+```
+
+If you look at digitool.rb and propnet.rb, there are working example
+of all of this and more.  There is also some other random information
+on the [fldigi-ruby home page](http://fldigi.gritch.org)
 
 Jeff
 N0GQ
