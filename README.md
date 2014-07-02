@@ -17,7 +17,9 @@ http://www.w1hkj.com/FldigiHelp-3.22/xmlrpc-control.html
 
 To use the API, you'll first need to require it:
 
+```ruby
 require 'fldigi'
+```
 
 Next, connect to fldigi.  There are three parameters that can be
 supplied here.  The simplest is to supply no parameters, which makes
@@ -26,12 +28,16 @@ host that this script is running on (ie, localhost/127.0.0.1), and
 that you've configured both FLDigi and your radio for remote control
 of frequency, mode, etc:
 
+```ruby
 fldigi=Fldigi.new()
+```
 
 If you have not wired and configured your radio for remote control, do
 this, instead:
 
+```ruby
 fldigi=Fldigi.new(false)
+```
 
 You can also optionally supply an IP address and a port number if
 you're trying to control FLDigi on another host or on a nonstandard
@@ -43,7 +49,9 @@ sometimes returning 'nil' as a result.  This is not uncommon, but
 technically not allowed by the standard.  So you have to tell ruby to
 allow for this deviation:
 
+```ruby
 XMLRPC::Config::ENABLE_NIL_PARSER=true
+```
 
 Most parameters within the object default to something sane at the
 time of creation, but there are a few things you might want to set.
@@ -54,29 +62,43 @@ internal object state, which does not affect the radio until you
 "sync" them.  Let's set up some state (even though some of these are
 already defaulted to the values we're setting):
 
-# Choose the PSK31 modem.
+Choose the PSK31 modem.
+```ruby
 fldigi.modem="BPSK31"
+```
 
-# Use a carrier frequency of 1khz (the "sweet spot" in most radios).
+Use a carrier frequency of 1khz (the "sweet spot" in most radios).
+```ruby
 fldigi.carrier=1000
+```
 
-# Set the dial frequency to 14.07mhz (final xmt freq is dial+carrier, or 14.071mhz).
+Set the dial frequency to 14.07mhz (final xmt freq is dial+carrier, or 14.071mhz).
+```ruby
 fldigi.dial_freq=14070000
+```
 
-# Turn on squelch.
+Turn on squelch.
+```ruby
 fldigi.squelch=true
+```
 
-# Set the squelch value to 3.0 (reasonable for most radios).
+Set the squelch value to 3.0 (reasonable for most radios).
+```ruby
 fldigi.slevel=3.0
+```
 
-# Turn on AFC.
+Turn on AFC.
+```ruby
 fldigi.afc=true
+```
 
 Note that at this point, nothing on the radio has actually changed
 (nor has anything in the FLDigi program).  All we've done is to
 prepare the object to sync to FLDigi.  Now let's "push" these changes:
 
+```ruby
 fldigi.config()
+```
 
 Now things should change.  FLDigi should show the BPSK31 modem
 selected, the carrier at 1000hz, AFC on, and squelch on and set to
@@ -87,10 +109,12 @@ receiving data.  We'll make sure we're in receive mode, and clear all
 the buffers (sent and received) in FLDigi.  Note that these commands
 execute immediately, without the need to "sync":
 
+```ruby
 fldigi.receive()
 fldigi.clear_tx_data()
 fldigi.get_tx_data()
 fldigi.get_rx_data()
+```
 
 We're ready to rock and roll.  We can send data, receive data, etc.
 Let's send a CQ.  There's two ways we can do this.  We could construct
@@ -99,9 +123,11 @@ is and call the cq method.  We'll do the latter.  the cq() method puts
 the CQ text into the object's output buffer, and send_buffer() sends
 this buffer to FLDigi and initiates transmission:
 
+```ruby
 fldigi.call="N0CLU"
 fldigi.cq()
 fldigi.send_buffer()
+```
 
 At this point, the radio should click over to transmit, and the CQ
 call should be sent.  The radio will automatically switch back to
@@ -110,13 +136,17 @@ until all buffered text has been transmitted).
 
 That's it.  You can also send arbitrary text like this:
 
+```ruby
 fldigi.add_tx_string("Now is the time for all good men to come to the aid of their country.")
 fldigi.send_buffer()
+```
 
 You can see everything that has been received since the last time you
 asked like this:
 
+```ruby
 puts get_rx_data()
+```
 
 If you look at digitool.rb, there are working example of all of this
 and more.
