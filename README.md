@@ -149,7 +149,8 @@ puts get_rx_data()
 ```
 
 If you look at digitool.rb, there are working example of all of this
-and more.
+and more.  There are also (at least for the moment) more examples on
+the [fldigi-ruby home page](http://fldigi.gritch.org)
 
 Jeff
 N0GQ
