@@ -1,0 +1,40 @@
+Version History:
+
+0.1.0 - 07/02/2013 - jfrancis - Finally added everything on github.
+No real code changes.  Finally ready for people to start using for
+something useful.
+
+0.0.15 - 07/02/2014 - jfrancis - Oops. No changes, just messed up
+the metadata.
+
+0.0.14 - 07/02/2014 - jfrancis - Be more consistent about to_f vs.
+to_i.  Also, add a function to return actual radio freq (instead of
+specified freq).
+
+0.0.13 - 06/11/2014 - jfrancis - A bunch of clean-up here.  I almost
+certainly broke some code with this one.  I changed @freq to
+@dial_freq to more accurately reflect what's going on, and added a
+method self.freq() to get/set the actual transmit frequency.
+Anything that did fldigi.freq=1234567 before will need to change to
+fldigi.dial_freq=1234567.  My apologies, but it just needed to be
+done.
+
+0.0.12 - 06/05/2014 - jfrancis - Allows for additional data to be
+appended to the output queue during transmit.  Also now defaults to
+not displaying a running output of transmitted data (though it can
+be switched back on with a 'true' flag to send_buffer()).
+
+0.0.11 - 05/29/2014 - jfrancis - Added optional offset.
+
+0.0.10 - 05/26/2014 - jfrancis - Forgot the 'require'.
+
+0.0.9 - 05/26/2014 - jfrancis - Added a lot of code comments.
+
+0.0.8 - 05/26/2014 - jfrancis - Fixed 10m propnet frequency. Got
+carried away with 0.0.7 fix, and had one too many zeros in there.
+
+0.0.7 - 05/26/2014 - jfrancis - All propnet frequencies were low by
+an order of magnitude (ie, left off a zero).
+
+0.0.6 - 05/25/2014 - jfrancis - First public release on
+rubygems.org.
