@@ -63,31 +63,37 @@ internal object state, which does not affect the radio until you
 already defaulted to the values we're setting):
 
 Choose the PSK31 modem.
+
 ```ruby
 fldigi.modem="BPSK31"
 ```
 
 Use a carrier frequency of 1khz (the "sweet spot" in most radios).
+
 ```ruby
 fldigi.carrier=1000
 ```
 
 Set the dial frequency to 14.07mhz (final xmt freq is dial+carrier, or 14.071mhz).
+
 ```ruby
 fldigi.dial_freq=14070000
 ```
 
 Turn on squelch.
+
 ```ruby
 fldigi.squelch=true
 ```
 
 Set the squelch value to 3.0 (reasonable for most radios).
+
 ```ruby
 fldigi.slevel=3.0
 ```
 
 Turn on AFC.
+
 ```ruby
 fldigi.afc=true
 ```
@@ -137,7 +143,7 @@ until all buffered text has been transmitted).
 That's it.  You can also send arbitrary text like this:
 
 ```ruby
-fldigi.add_tx_string("Now is the time for all good men to come to the aid of their country.")
+fldigi.add_tx_string("Now is the time for all good men to come to the aid of their country de N0CLU")
 fldigi.send_buffer()
 ```
 
