@@ -1,19 +1,52 @@
-fldigi-ruby
+#fldigi-ruby
+
 ===========
+
+
+
+##Description
 
 fldigi-ruby is a ruby gem for interfacing with the FLDigi API.  The
 intent is to be able to use fldigi as a radio modem from ruby scripts
 (though it's useful for other tasks, as well, such as changing
 frequencies on a schedule, fetching the current radio frequency, etc).
 
-The FLDigi API is only very lightly documented (basically one sentence
-of explanation per API call), and there is essentially zero client
-source on the Internet to use as a reference (ie, to steal from)
-beyond what's shipped with FLDigi, so this code is a result of doing a
-lot of reading of the FLDigi source combined with a bunch of trial and
-error.  What little documentation I can find is here:
+I love FLDigi.  One of my favorite features is the API.  But talking
+directly to the XML-RPC API is a bit of a pain in the ass from random
+ruby code, so I wrote a gem to abstract it a layer, and remove some of
+the "ick" factor.  The documenation for the FLDigi API is, to put it
+kindly, a little lacking.  It basically amounts to a one-line
+description of each call (see
+[here](http://www.w1hkj.com/FldigiHelp-3.22/xmlrpc-control.html)).
+The best documenation has turned out to be reading the FLDigi source.
 
-http://www.w1hkj.com/FldigiHelp-3.22/xmlrpc-control.html
+At any rate, I've written a gem to make all of this just a bit easier
+to use.  I've also written a few demonstration clients.  The first
+client allows you to send CQ from the command line, or to send any
+arbitrary text, using whatever frequency, carrier, mode, and modem you
+wish.  The second client is a PropNET client written in ruby that uses
+FLDigi as a modem.  Be aware that I haven't tested the propnet client
+yet, other than to verify that the output looks sane.  The third
+client (not quite ready to publish) is an PSK31/PSK63 APRS client.  At
+this point, there is no documentation save this page and the demo
+code.
+
+This code has been tested on Linux and OS/X, and so far, works
+perfectly.  I do not own or currently have access to a Windows box, so
+your mileage may vary there.  Please provide feedback for features and
+bugs.  My time is limited, but I'll do what I can.  My intent is that
+library calls won't change, only new calls will be added, but at this
+point, it's early enough in the development cycle that I can't promise
+that.
+    
+There's a lot to be desired in things like validating and
+error-checking of user input.  For example, if you enter bogus fields
+for phg (for propnet), it'll either send bad data, or barf, depending
+on which value you hork up.  Input validation is on the very long list
+of To-Do items.
+
+
+##How to Use
 
 To use the API, you'll first need to require it:
 
@@ -74,7 +107,7 @@ Use a carrier frequency of 1khz (the "sweet spot" in most radios).
 fldigi.carrier=1000
 ```
 
-Set the dial frequency to 14.07mhz (final xmt freq is dial+carrier, or 14.071mhz).
+Set the dial frequency to 14.070mhz (final xmt freq is dial+carrier, or 14.071mhz).
 
 ```ruby
 fldigi.dial_freq=14070000
@@ -234,6 +267,46 @@ functionality is untested):
     end
   end
 ```
+
+##Included Scripts
+
+###digitool.rb
+
+The digitool.rb script does a bunch of random (and hopefully
+useful) things.  It'll call CQ for you, it'll randomly tune
+around the band segment you're in, finding QSOs and printing
+them, and other assorted things.  Mostly, it serves as an
+example of how to use the fldigi library.  I tried to make the
+defaults reasonably sane.  For example, unless you specify
+otherwise (by using --carrier), the audio carrier defaults to
+1000hz.  so if you say "./digitool.rb --txfreq 14071000", it'll
+set your dial frequency to 14070000hz and your carrier to
+1000hz, so your transmit (and receive) frequency will be
+14071000hz.  If you tell it "./digitool.rb --dialfreq
+14070000", you'll get exactly the same transmit/receive
+frequency.  Hopefully, being able to specify the dial
+frequency, the transmit frequency, and/or the carrier frequency
+will clear up some of the problems that newcomers have to using
+digital modes.  I sometimes find it useful to do something like:
+
+```
+while [ 1 ]; do ./digitool.rb --call n0gq --cq --txfreq 14106500 --carrier 1500 --modem Olivia-32-1K --listen 60; done
+```
+
+This will transmit a CQ on 20M in Olivia 32/1000, listen for
+sixty seconds, then repeat forever.  If/when I get an answer, I
+just ^C the script, and move over to FLDigi for the QSO.
+
+###propnet.rb
+
+Connects to a local FLDigi instance with the default API port.  Example use:
+
+```
+./propnet.rb --call N0CLU --band 40 --phg PHG410015 --grid DM79wu
+```
+
+See [the PropNet web site](http://propnet.org) for more information, such as how to set --phg.
+
 
 If you look at digitool.rb and propnet.rb, there are working example
 of all of this and more.  There is also some other random information
