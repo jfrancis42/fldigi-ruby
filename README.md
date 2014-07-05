@@ -2,7 +2,7 @@
 
 ===========
 
-##Description
+## Description
 
 fldigi-ruby is a ruby gem for interfacing with the FLDigi API.  The intent is to be able to use fldigi as a radio modem from ruby scripts (though it's useful for other tasks, as well, such as changing frequencies on a schedule, fetching the current radio frequency for insertion into a log, etc).
 
@@ -18,7 +18,7 @@ This code has been tested on Linux and OS/X, and so far, works perfectly.  I do 
     
 There's a lot to be desired in things like validating and error-checking of user input.  For example, if you enter bogus fields for phg (for propnet), it'll either send bad data, or barf, depending on which value you hork up.  Input validation is on the very long list of To-Do items.
 
-##How to Use
+## How to Use
 
 To use the API, you'll first need to require it:
 
@@ -201,9 +201,9 @@ Here's a simple example to send a PropNet beacon (note that PropNet functionalit
   end
 ```
 
-##Included Scripts
+## Included Scripts
 
-###digitool.rb
+### digitool.rb
 
 The digitool.rb script does a bunch of random (and hopefully useful) things.  It'll call CQ for you, it'll randomly tune around the band segment you're in, finding QSOs and printing them, and other assorted things.  Mostly, it serves as an example of how to use the fldigi library.  I tried to make the defaults reasonably sane.  For example, unless you specify otherwise (by using --carrier), the audio carrier defaults to 1000hz.  so if you say "./digitool.rb --txfreq 14071000", it'll set your dial frequency to 14070000hz and your carrier to 1000hz, so your transmit (and receive) frequency will be 14071000hz.  If you tell it "./digitool.rb --dialfreq 14070000", you'll get exactly the same transmit/receive frequency.  Hopefully, being able to specify the dial frequency, the transmit frequency, and/or the carrier frequency will clear up some of the problems that newcomers have to using digital modes.  I sometimes find it useful to do something like:
 
@@ -213,7 +213,7 @@ while [ 1 ]; do ./digitool.rb --call n0gq --cq --txfreq 14106500 --carrier 1500 
 
 This will transmit a CQ on 20M in Olivia 32/1000, listen for sixty seconds, then repeat forever.  If/when I get an answer to my CQ, I just ^C the script, and move over to FLDigi and continue the QSO.
 
-###propnet.rb
+### propnet.rb
 
 Connects to a local FLDigi instance with the default API port and sends a PropNet beacon.  Has the option of continuing to do so at a specified interval forever.  Note (see above) that the PropNet client may or may not be working.  I've tried sending beacons with it, and they don't show up on the PropNet page.  That may be bad luck, or it may be broken.  Or more precisely, it may need to have it's CRC16 calculation broken to match the (possibly) broken one used by PropNet.  I'm a little unclear on this, as some online discussion claims it's broken, and other discussion says it isn't.  At any rate, I couldn't get it to work as-is, though it does follow their documented format precisely.  Making it work is on my to-do list.  Example use:
 
