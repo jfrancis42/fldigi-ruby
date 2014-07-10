@@ -1,0 +1,3 @@
+ - Provide a function to read and return actual dial frequency.
+ - Provide a function to read and return actual carrier frequency.
+ - Provide a function to read and return actual modem.
