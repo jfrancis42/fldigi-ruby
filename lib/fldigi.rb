@@ -233,10 +233,10 @@ class Fldigi
     if (@dial_freq!=@dial_freq_old or @offset!=@offset_old) and @rigctl
       @dial_freq_old=@dial_freq
       @offset_old=@offset
-      if @dial_freq+@offset.to_i!=self.sendcmd("main.get_frequency").to_i
-        self.sendcmd("main.set_frequency", @dial_freq+@offset.to_i)
+      if @dial_freq+@offset.to_i!=self.sendcmd("main.get_frequency").to_f
+        self.sendcmd("main.set_frequency", @dial_freq+@offset.to_f)
         sleep 0.5
-        if @dial_freq+@offset.to_i!=self.sendcmd("main.get_frequency").to_i
+        if @dial_freq+@offset.to_i!=self.sendcmd("main.get_frequency").to_f
           return false
         end
       end

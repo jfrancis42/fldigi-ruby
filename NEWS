@@ -1,6 +1,15 @@
 Version History:
 
-0.1.0 - 07/02/2013 - jfrancis - Finally added everything on github.
+0.1.1 - 07/09/2014 - jfrancis - Crap, I committed the cardinal
+developer's sin.  I made a change to the code and did a commit without
+testing it first.  After all, what could go wrong?  Radio gear was
+still packed from a camping trip, and didn't feel like hooking it up
+just to test.  Got a little overzealous with the to_i vs. to_f and
+tried to send FLDigi a frequency as an int instead of a float.  Hope
+there's not more.  This should be a hint to me that it's time to add
+some automated regression testing.  It's on the list...
+
+0.1.0 - 07/02/2014 - jfrancis - Finally added everything on github.
 No real code changes.  Finally ready for people to start using for
 something useful.
 
