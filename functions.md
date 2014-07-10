@@ -12,6 +12,21 @@ There are two text buffers to be aware of.  First, there is a text buffer in FLD
 
 In typical use, the fldigi object is first created, and various desired parameters are set in the object itself, then that object is "synced" with FLDigi and the radio.  The object is created in typical ruby fashion:  `fldigi=Fldigi.new()`.  Various parameters can be passed, as documented below.  The object is created with some reasonably sane defaults, such as BPSK-31 mode, a radio dial frequency of 14.070mhz, a carrier of 1000hz, AFC on, squelch on, and a squelch level of 3.0.  Any of these parameters (and more) can be set before syncing to the radio.  Parameters are set by either setting a variable within the object, or calling the appropriate object method (these are documented below).  An example would be turning AFC off:  `fldigi.afc=false`.  Once all variables, modes, etc. are set to desired values, call `fldigi.config()` to actually transfer these setting to FLDigi and the radio.  Unless a function is documented as having an immediate effect, you must call this function before any change you make has an effect on FLDigi or the radio.  The first time config() is called, it will set all possible parameters.  Since pushing parameters is not fast, subsequent calls will only push a subset of the data.  Frequency and carrier will always be pushed (since the user may have futzed with the radio dial and/or moved the audio carrier with his mouse of AFC).  Other parameters will only be pushed if they have been changed since the last time config() was called.
 
+Note that I'm working towards changing all variables into function calls, and in an upcoming release, you will no longer have access to change them.  Your code must change from this:
+
+```ruby
+fldigi.call="N0CLU"
+```
+
+to this:
+
+```ruby
+fldigi.call("N0GQ")
+```
+
+This is to allow for more control and error checking of user input.
+
+
 ***
 
 ### Variables Available to Applications
