@@ -3,8 +3,6 @@
 
 # Jeff Francis, N0GQ, jeff@gritch.org
 #
-# v.0.1.0, 02.Jul.2014
-#
 # Connects to a local FLDigi instance with the default API port.  Example use:
 #
 # ./propnet.rb --call N0CLU --band 40 --phg PHG410015 --grid DM79wu

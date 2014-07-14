@@ -21,11 +21,10 @@ fldigi.call="N0CLU"
 to this:
 
 ```ruby
-fldigi.call("N0GQ")
+fldigi.call("N0CLU")
 ```
 
 This is to allow for more control and error checking of user input.
-
 
 ***
 

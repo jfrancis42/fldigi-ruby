@@ -208,14 +208,14 @@ Here's a simple example to send a PropNet beacon (note that PropNet functionalit
 The digitool.rb script does a bunch of random (and hopefully useful) things.  It'll call CQ for you, it'll randomly tune around the band segment you're in, finding QSOs and printing them, and other assorted things.  Mostly, it serves as an example of how to use the fldigi library.  I tried to make the defaults reasonably sane.  For example, unless you specify otherwise (by using --carrier), the audio carrier defaults to 1000hz.  so if you say "./digitool.rb --txfreq 14071000", it'll set your dial frequency to 14070000hz and your carrier to 1000hz, so your transmit (and receive) frequency will be 14071000hz.  If you tell it "./digitool.rb --dialfreq 14070000", you'll get exactly the same transmit/receive frequency.  Hopefully, being able to specify the dial frequency, the transmit frequency, and/or the carrier frequency will clear up some of the problems that newcomers have to using digital modes.  I sometimes find it useful to do something like:
 
 ```
-while [ 1 ]; do ./digitool.rb --call n0gq --cq --txfreq 14106500 --carrier 1500 --modem Olivia-32-1K --listen 60; done
+while [ 1 ]; do ./digitool.rb --call n0clu --cq --txfreq 14106500 --carrier 1500 --modem Olivia-32-1K --listen 60; done
 ```
 
 This will transmit a CQ on 20M in Olivia 32/1000, listen for sixty seconds, then repeat forever.  If/when I get an answer to my CQ, I just ^C the script, and move over to FLDigi and continue the QSO.
 
 ### propnet.rb
 
-Connects to a local FLDigi instance with the default API port and sends a PropNet beacon.  Has the option of continuing to do so at a specified interval forever.  Note (see above) that the PropNet client may or may not be working.  I've tried sending beacons with it, and they don't show up on the PropNet page.  That may be bad luck, or it may be broken.  Or more precisely, it may need to have it's CRC16 calculation broken to match the (possibly) broken one used by PropNet.  I'm a little unclear on this, as some online discussion claims it's broken, and other discussion says it isn't.  At any rate, I couldn't get it to work as-is, though it does follow their documented format precisely.  Making it work is on my to-do list.  Example use:
+Connects to a local FLDigi instance with the default API port and sends a PropNet beacon.  Has the option of continuing to do so at a specified interval forever.  Note (see above) that the PropNet client may or may not be working.  I've tried sending beacons with it, and they don't show up on the PropNet page.  That may be bad luck, or it may be broken.  Or more precisely, it may (or may not) need to have it's CRC16 calculation broken to match the (possibly) broken one used by PropNet.  I'm a little unclear on all of this, as some online discussion claims it's broken, and other discussion says it isn't.  At any rate, I couldn't get it to work as-is, though it does follow their documented format precisely.  Making it work is on my to-do list.  Example use:
 
 ```
 ./propnet.rb --call N0CLU --band 40 --phg PHG410015 --grid DM79wu
@@ -223,7 +223,31 @@ Connects to a local FLDigi instance with the default API port and sends a PropNe
 
 See [the PropNet web site](http://propnet.org) for more information, such as how to set --phg.
 
+### listen.rb
+
+listen.rb and talk.rb are a pair of programs I wrote out of sheer frustration.  I'm constantly wanting to test different propagation, antennas, modes, and power levels between two points, but finding someone to man the station at random odd hours to do the testing has not proven fruitful.  Not to mention, even if I could find a willing victim, it might be a different victim with different antennas, power levels, and equipment each time, so results from one test might not be comparable to results from a second test.  This pair of programs is the result of that frustration.  The idea is simple.  I run listen.rb on my home station.  Every sixty seconds, it changes to the next (out of five) frequency, and listens for sixty seconds for my call sign on the mode I've specified.  If it hears it, it sends me a text message on my phone with the frequency, signal quality, and timestamp.  Meanwhile, I pack up a second station and take it with me wherever I want to test from (camping, a business trip, a city park a few miles down the road, whatever).  I plug in the Signalink, the radio, and the GPS receiver, and then fire up talk.rb.  Assuming I have my clock set accurately on both stations (I used ntpd on the home station and a combination of ntpd and gpsd on the remote station), talk.rb starts sending out location data once per minute, on each of five bands.  Any time my home station hears my remote station, I get a text message that tells me how well it was heard.  Viola, problem solved with technology.  If I'm camping out of range of cell service, I simply read through the FLDigi logs when I return home and correllate the timestamps in the logs with the notes I made in the field (regarding power, antenna, etc).
+
+So, specifics...  listen.rb requires several parameters.  It requires a call sign to listen for using `--call`, a list of five frequencies to step through (or you can use my default list using `--defaults`), a modem (it defaults to BPSK-31), and a method of sending you messages (currently configured for sending texts via Google Voice or PushOver (both free services).  Both Google Voice and PushOver require login credentials, so either or both service credentials must be specified in a YAML file that you specify with `--creds`.  It's a standard YAML file, and looks like this:
+
+```
+---
+gvlogin: n0clu@gmail.com
+gvpasswd: n0treallyap@ssw0rd
+pouser: uJDjjd77djUUUdxllvyw8EN9qzzyP
+potoken: kAidUen74nahDUYembdye886cjd73nd
+```
+
+`gvlogin` is your Google login, `gvpasswd` is your Google password, `pouser` is your PushOver UserID, and `potoken` is your PushOver API token.  You can put creds for both services in the same file if you wish, but it's only required to have one (either one) of them.
+
+### talk.rb
+
+talk.rb has essentially the same options as listen.rb, with a couple of exceptions.  First, it will require you to specify the number of iterations through the five frequencies you'd like to make.  It's not intended to run forever like a beacon, it's intended to run through the set two or three times (to make sure you've got at least two or three chances on each band), then you stop, change something (power, location, antenna, whatever), and try again.  Once it changes to a new band, you have ten seconds before transmissions start.  This is to give you a chance to listen for other activity on frequency that you might interfere with.  If somebody is on your exact frequency, hit "^C" and wait until they're done.  You also either need to be running gpsd on your remote system, or specify your latitutde, longitude, and altitude manually.  Latitude and longitude are specified as decimals (ie, 123.45678).  Latitude is positive in the Northern Hemisphere, negative in the Southern.  Longitude is negative in the Western Hemisphere, positive in the Eastern.  Altitude is in feet because I'm an American and because I'm a pilot (both of whom have standardized on the "wrong" system).  As with listen.rb, you can optionally specify a list of five frequencies, or use my defaults.  The modem must match that used by listen.rb.
+
+===========
+
 If you look at digitool.rb and propnet.rb, there are working example of all of this and more.  There is also some other random information on the [fldigi-ruby home page](http://fldigi.gritch.org), though I'm slowly moving that information into this document.
+
+===========
 
 73
 Jeff
