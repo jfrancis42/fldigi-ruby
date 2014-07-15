@@ -1,4 +1,5 @@
 fldigi-*.gem
+hamnet-*.gem
 update.ksh
 index.md
 index.html
@@ -7,3 +8,5 @@ release_checklist.md
 release_checklist.html
 functions.html
 functions.pdf
+lib/hamnet.extra.rb
+
