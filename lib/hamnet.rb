@@ -29,7 +29,7 @@ FRAME_POSITION=6
 # CRC field.  Last eight bytes, CRC32 checksum of From, To, Type, Data fields.
 # Trailer field.  Three bytes, consisting of ">>>"
 class Frame
-  attr_accessor :from, :to, :type, :valid
+  attr_accessor :from, :to, :type, :valid, :frompad, :topad
 
   def initialize(from, to, type)
     @from=from.downcase
@@ -40,11 +40,14 @@ class Frame
     @crc=nil
     @valid=nil
 
-    while @from.length<8
-      @from=@from+":"
+    @frompad=@from
+    while @frompad.length<8
+      @frompad=@frompad+":"
     end
-    while @to.length<8
-      @to=@to+":"
+
+    @topad=@to
+    while @topad.length<8
+      @topad=@topad+":"
     end
   end
 
@@ -68,14 +71,23 @@ class TxFrame < Frame
     # Do the needful with the payload.
     case @type
     when FRAME_SIMPLE
-      message=@from+@to+@type.to_s+@userdata
+      message=@frompad+@topad+@type.to_s+@userdata
       @crc=Zlib::crc32(message).to_s(16).downcase
+      while @crc.length<8
+        @crc="0"+@crc
+      end
     when FRAME_BASE64
-      message=@from+@to+@type.to_s+Base64::strict_encode64(@userdata)
+      message=@frompad+@topad+@type.to_s+Base64::strict_encode64(@userdata)
       @crc=Zlib::crc32(message).to_s(16).downcase
+      while @crc.length<8
+        @crc="0"+@crc
+      end
     when FRAME_COMPRESSED_BASE64
-      message=@from+@to+@type.to_s+Base64::strict_encode64(Zlib::Deflate.deflate(@userdata,Zlib::BEST_COMPRESSION))
+      message=@frompad+@topad+@type.to_s+Base64::strict_encode64(Zlib::Deflate.deflate(@userdata,Zlib::BEST_COMPRESSION))
       @crc=Zlib::crc32(message).to_s(16).downcase
+      while @crc.length<8
+        @crc="0"+@crc
+      end
     else
       return false
     end
@@ -123,7 +135,7 @@ class RxFrame < Frame
       when FRAME_COMPRESSED_BASE64
         @userdata=Zlib::Inflate.inflate(Base64::strict_decode64(tmp))
       end
-      # Calculate the check the CRC.
+      # Calculate and check the CRC.
       @crc=Zlib::crc32(crcstring).to_s(16).downcase
       if crc==@crc
         @valid=true
