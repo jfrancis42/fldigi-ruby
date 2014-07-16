@@ -1,5 +1,14 @@
 Version History:
 
+0.1.2 - 07/16/2014 - jfrancis - Setting the carrier was broken.  The
+code was comparing the current carrier with what the carrier was
+previously set to, and only pushing the change if they differed.  This
+means that if the user clicked the carrier to a new spot, or of AFC
+caused it to drift, updating the carrier had no effect.  Changed to
+code to compare the desired carrier with the actual carrier, and make
+the change based on that, rather than the value it was previously set
+to.
+
 0.1.1 - 07/09/2014 - jfrancis - Crap, I committed the cardinal
 developer's sin.  I made a change to the code and did a commit without
 testing it first.  After all, what could go wrong?  Radio gear was

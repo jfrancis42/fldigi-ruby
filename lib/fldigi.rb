@@ -44,7 +44,6 @@ class Fldigi
     @dial_freq=14070000.0
     @dial_freq_old=nil
     @carrier=1000
-    @carrier_old=nil
     @call=nil
     @call_old=nil
     @modem="BPSK31"
@@ -97,8 +96,7 @@ class Fldigi
     # drift due to AFC).
     if @carrier
       @carrier=@carrier.to_i
-      if @carrier!=@carrier_old
-        @carrier_old=@carrier
+      if @carrier!=self.get_carrier().to_i
         self.sendcmd("modem.set_carrier", @carrier)
       end
     end
