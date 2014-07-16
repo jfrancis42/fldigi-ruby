@@ -18,6 +18,22 @@ This code has been tested on Linux and OS/X, and so far, works perfectly.  I do 
     
 There's a lot to be desired in things like validating and error-checking of user input.  For example, if you enter bogus fields for phg (for propnet), it'll either send bad data, or barf, depending on which value you hork up.  Input validation is on the very long list of To-Do items.
 
+## First Things First
+
+Before you can have any hope of using this library, you first need to make sure that FLDigi is installed and working correctly and that it's correctly talking to your radio.  If either of these aren't working, you have little to no chance of doing anything useful.
+
+You should be able to have a PSK-31 conversation with FLDigi.  You should have your computer audio wired to your radio, and you should have all of your levels set right (ie, don't overdrive the transmit - if your ALC is moving, you've got it set too high).  If you can have a nice digital QSO with somebody with your setup in it's current condition, you're 1/3 of the way there.
+
+Second step is to make sure that FLDigi can control the mode and frequency of your radio.  You should be able to change bands and frequencies by clicking on the FLDigi user interface.  Obviously, this requires some wiring between your computer and your radio.  With most radios, this is pretty simple.  I bought USB cables on EBay for about $20 each for my Icom and Yaesu radios that take care of this.  It's certainly possible to homebrew your own interfaces (I used to do it that way in Ye Olden Dayes of Yore).  If you can't control the dial frequency, you're stuck with manual tuning, and FLDigi only has about 3khz of spectrum to work with.  Which, in turn, means your code only has about 3khz to work with.  You can certainly still do some things, but you're severely crippling yourself.  If you're good here, that's 2/3 done.
+
+Finally, you need to install the library.  I'm going to make the assumption you've already got ruby installed.  Which means you just need to add the fldigi gem.  On a Mac or Linux, open a terminal, and run:
+
+```bash
+sudo gem install fldigi
+```
+
+This will go fetch and install the latest version of the gem on your machine.  As the code is still under development, it might be worthwhile to update it regularly (I keep finding bugs and squashing them).  If you have Windows, you'll need to do whatever the equivalent function is to download and install the gem.  I've tested this pretty heavily on Mac and Linux, but I don't own a Windows machine, so I've never tested it in that environment.  I *should* work, but I honestly don't know.  Once you've got the libraries installed, you're 3/3 done with your preparations.
+
 ## How to Use
 
 To use the API, you'll first need to require it:
