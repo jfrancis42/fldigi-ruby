@@ -230,12 +230,8 @@ if opts[:listen_given]
   while true
     q=fldigi.quality().to_i
     # If the signal quality is less than 25, search for a (new) signal
-    # to watch.  Also, I have a birdies/carriers that shows up about
-    # 14070105 and 14070135 that FLDigig mistakenly locks onto in
-    # PSK31 mode all the time and just spews the letter 'e' endlessly.
-    # If the carrier falls way down at the bottom of the waterfall on
-    # 20M (where there are never useful signals, anyway), ignore it.
-    if q<25 or (fldigi.freq()>14070000 and fldigi.freq()<14070140 and fldigi.modem=="BPSK31")
+    # to watch.
+    if q<25
       if opts[:wander_given]
         if rand(2)==0
           fldigi.search_up()
