@@ -3,8 +3,6 @@
 
 # Jeff Francis, N0GQ, jeff@gritch.org
 #
-# v.0.1.0, 2.Jul.2014
-#
 # Send messages using FLDigi as a modem.  Talks to FLDigi via the
 # built-in XML-RPC API (make sure you enable API access inside of
 # FLDigi).  For the moment, this code only talks to an instance of
@@ -246,7 +244,7 @@ if opts[:listen_given]
         end
       end
     else
-      puts "(#{q} #{fldigi.freq()} #{Time.now().to_s}) #{fldigi.get_rx_data()}"
+      puts "(#{q} #{fldigi.freq()} #{Time.now().to_s}) #{fldigi.get_rx_data().gsub(/(\n|\r)/,' ')}"
     end
 
     # Listen for however long was specified (or forever if zero).
