@@ -23,8 +23,32 @@
 require 'xmlrpc/client'
 require 'thread'
 
+# Turn 1/0 into false/true (some XMLRPC libraries seem to return 1/0,
+# others true/false).  This cleans up the code a bit.
+def torf(n)
+  if n==0 or n==false
+    return false
+  else
+    return true
+  end
+end
+
+# Hold the error message generated (along with a timestamp).
+class Error
+  attr_accessor :timestamp, :text
+
+  def initialize(text)
+    @timestamp=Time.now()
+    @text=text
+  end
+
+  def to_s
+    "#{@timestamp.to_s}:  #{@text}"
+  end
+end
+
 class Fldigi
-  attr_accessor :rigctl, :dial_freq, :carrier, :call, :modem, :afc, :rsid, :sideband, :squelch, :slevel, :spot, :delay, :grid, :phg, :band, :offset, :start_wait, :char_wait, :debug
+  attr_accessor :rigctl, :dial_freq, :carrier, :call, :modem, :afc, :rsid, :sideband, :squelch, :slevel, :spot, :delay, :grid, :phg, :band, :offset, :start_wait, :char_wait, :debug, :errors
 
   # Do the initial setup.  All arguments are optional, default is
   # rigctl, localhost, standard port.  If you have no rig control,
@@ -39,6 +63,7 @@ class Fldigi
     @port=port
     @message=""
     @rigctl=rigctl
+    @errors=Array.new
 
     # Set up the defaults.
     @dial_freq=14070000.0
@@ -77,6 +102,11 @@ class Fldigi
     # Connect to the FLDigi instance.
     @srvr=XMLRPC::Client.new(host,"/RPC2",port)
     @m=Mutex.new
+  end
+
+  # Add an error message to the queue.
+  def error(text)
+    @errors.push(Error.new(text))
   end
 
   # Send an XML-RPC command to FLDigi.
@@ -139,7 +169,8 @@ class Fldigi
         if @modem==self.sendcmd("modem.get_name")
           @modem_old=@modem
         else
-          puts "modem.set_name failed <-----------------------" if @debug
+          self.error("modem.set_name failed with value #{@modem}")
+          puts "modem.set_name failed" if @debug
           status=false
         end
       end
@@ -147,38 +178,47 @@ class Fldigi
     
     # Turn spot on/off (true/false).
     if @spot!=@spot_old
-      ret=self.sendcmd("spot.get_auto")
-      if (ret==1 and @spot==true) or (ret==0 and @spot==false) or (ret==@spot)
+      if torf(self.sendcmd("spot.get_auto"))==@spot
         @spot_old=@spot
       else
         self.sendcmd("spot.set_auto", @spot)
-        ret=self.sendcmd("spot.get_auto")
-      if (ret==1 and @spot==true) or (ret==0 and @spot==false) or (ret==@spot)
+      if torf(self.sendcmd("spot.get_auto"))==@spot
           @spot_old=@spot
         else
-          puts "spot.set_auto failed <-----------------------" if @debug
+          self.error("spot.set_auto failed with value #{@spot}")
+          puts "spot.set_auto failed" if @debug
           status=false
         end
       end
     end
 
-    # Turn AFC on/off (true/false).
-    if @afc!=@afc_old
-      ret=self.sendcmd("main.get_afc")
-      if (ret==1 and @afc==true) or (ret==0 and @afc==false) or (ret==@afc)
+    # Turn AFC on/off (true/false). Certain modes don't allow AFC, and
+    # trying to set it will return an error.  If attempting to set one
+    # of these modes, ignore the requested AFC setting.
+    if (@afc!="NULL" and @afc!="CW" and @afc!="CTSTIA" and @afc!="DOMEX4" and @afc!="DOMEX5" and 
+        @afc!="DOMEX8" and @afc!="DOMX11" and @afc!="DOMX16" and @afc!="DOMX22" and @afc!="DOMX44" and 
+        @afc!="DOMX88" and @afc!="FELDHELL" and @afc!="SLOWHELL" and @afc!="HELLX5" and 
+        @afc!="HELLX9" and @afc!="FSKHELL" and @afc!="FSKH105" and @afc!="HELL80" and 
+        @afc!="MT63-500S" and @afc!="MT63-500L" and @afc!="MT63-1KS" and @afc!="MT63-1KL" and 
+        @afc!="MT63-2KS" and @afc!="MT63-2KL" and @afc!="OLIVIA" and @afc!="Olivia-8-250" and 
+        @afc!="Olivia-4-500" and @afc!="Olivia-8-500" and @afc!="Olivia-8-1K" and @afc!="Olivia-16-1K" and 
+        @afc!="Olivia-32-1K" and @afc!="Olivia-64-2K" and @afc!="THOR4" and @afc!="THOR5" and 
+        @afc!="THOR8" and @afc!="THOR16" and @afc!="THOR22" and @afc!="THOR25x4" and @afc!="THOR50x2" and 
+        @afc!="THOR100" and @afc!="SSB" and @afc!="WWV" and @afc!="ANALYSIS") and (@afc!=@afc_old)
+      if torf(self.sendcmd("main.get_afc"))==@afc
         @afc_old=@afc
       else
         self.sendcmd("main.set_afc", @afc)
-        ret=self.sendcmd("main.get_afc")
-      if (ret==1 and @afc==true) or (ret==0 and @afc==false) or (ret==@afc)
+        if torf(self.sendcmd("main.get_afc"))==@afc
           @afc_old=@afc
         else
-          puts "main.set_afc failed <-----------------------" if @debug
+          self.error("main.set_afc failed with value #{@afc}")
+          puts "main.set_afc failed" if @debug
           status=false
         end
       end
     end
-    
+
     # Set the sideband ("USB"/"LSB").  ToDo: make sure this is
     # correct.
     if @sideband!=@sideband_old
@@ -189,7 +229,8 @@ class Fldigi
         if @sideband==self.sendcmd("main.get_sideband")
           @sideband_old=@sideband
         else
-          puts "main.set_sideband failed <-----------------------" if @debug
+          self.error("main.set_sideband failed with value #{@sideband}")
+          puts "main.set_sideband failed" if @debug
           status=false
         end
       end
@@ -197,16 +238,15 @@ class Fldigi
 
     # Turn RSID receive on/off (true/false).
     if @rsid!=@rsid_old
-      ret=self.sendcmd("main.get_rsid")
-      if (ret==1 and @rsid==true) or (ret==0 and @rsid==false) or (ret==@rsid)
+      if torf(self.sendcmd("main.get_rsid"))==@rsid
         @rsid_old=@rsid
       else
         self.sendcmd("main.set_rsid", @rsid)
-        ret=self.sendcmd("main.get_rsid")
-      if (ret==1 and @rsid==true) or (ret==0 and @rsid==false) or (ret==@rsid)
+        if torf(self.sendcmd("main.get_rsid"))==@rsid
           @rsid_old=@rsid
         else
-          puts "main.set_rsid failed <-----------------------" if @debug
+          self.error("main.set_rsid failed with value #{@rsid}")
+          puts "main.set_rsid failed" if @debug
           status=false
         end
       end
@@ -214,16 +254,15 @@ class Fldigi
     
     # Turn squelch on/off (true/false).
     if @squelch!=@squelch_old
-      ret=self.sendcmd("main.get_squelch")
-      if (ret==1 and @squelch==true) or (ret==0 and @squelch==false) or (ret==@squelch)
+      if torf(self.sendcmd("main.get_squelch"))==@squelch
         @squelch_old=@squelch
       else
         self.sendcmd("main.set_squelch", @squelch)
-        ret=self.sendcmd("main.get_squelch")
-      if (ret==1 and @squelch==true) or (ret==0 and @squelch==false) or (ret==@squelch)
+        if torf(self.sendcmd("main.get_squelch"))==@squelch
           @squelch_old=@squelch
         else
-          puts "main.set_squelch failed <-----------------------" if @debug
+          self.error("main.set_squelch failed with value #{@squelch}")
+          puts "main.set_squelch failed" if @debug
           status=false
         end
       end
@@ -239,7 +278,8 @@ class Fldigi
         if @slevel==self.sendcmd("main.get_squelch_level")
           @slevel=@slevel.to_f
         else
-          puts "main.set_squelch_level failed <-----------------------" if @debug
+          self.error("main.set_squelch_level failed with value #{@slevel}")
+          puts "main.set_squelch_level failed" if @debug
           status=false
         end
       end
@@ -280,7 +320,8 @@ class Fldigi
         self.sendcmd("main.set_frequency", @dial_freq+@offset.to_f)
         sleep 0.5
         if @dial_freq+@offset.to_i!=self.sendcmd("main.get_frequency").to_f
-          puts "main.set_frequency failed <-----------------------" if @debug
+          self.error("main.set_frequency failed with value #{@dial_freq}")
+          puts "main.set_frequency failed" if @debug
           status=false
         end
       end
@@ -316,6 +357,7 @@ class Fldigi
     if self.sendcmd("main.get_trx_status")=="tx"
       return true
     else
+      self.error("main.tx failed")
       return false
     end
   end
@@ -527,6 +569,7 @@ class Fldigi
         @dial_freq=50291000
         @fsym="vb"
       else
+        self.error("Invalid propnet band: #{band}")
         return false
       end
 
@@ -558,6 +601,7 @@ class Fldigi
       self.add_tx_string("CQ CQ CQ de #{@call} #{@call} #{@call} pse k")
       return true
     else
+      self.error("Unable to queue CQ string.")
       return false
     end
   end

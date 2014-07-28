@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 # Jeff Francis, N0GQ, jeff@gritch.org
+# http://fldigi.gritch.org
 #
 # Send messages using FLDigi as a modem.  Talks to FLDigi via the
 # built-in XML-RPC API (make sure you enable API access inside of
@@ -25,7 +26,6 @@
 #
 # http://pskreporter.info/pskmap.html
 
-require 'io/console'
 require 'time'
 require 'thread'
 require 'rubygems'
@@ -39,11 +39,10 @@ require 'fldigi'
 opts=Trollop::options do
   opt :call, "Call sign", :type => :string
   opt :cq, "Call CQ (must specify --call)"
-  opt :debug, "Show extra debug info (not useful for most users)"
   opt :host, "The FLDigi host (defaults to localhost)", :type => :string
   opt :port, "The FLDigi port (defaults to 7362)", :type => :string
   opt :message, "The message to be sent", :type => :string
-  opt :dialfreq, "Dial frequency (hz, defaults to 14070000 same as --txfreq if combined with --carrier)", :type => :string
+  opt :dialfreq, "Dial frequency (hz, defaults to 14070000)", :type => :string
   opt :txfreq, "Transmit frequency (hz, defaults to 14071000, assuming default 1khz carrier, overrides --dialfreq)", :type => :string
   opt :offset, "Frequency offset of this rig relative to your standard (in hz)", :type => :string
   opt :norigctl, "Use if FLDigi is not configured to remotely control your radio frequency"
@@ -52,12 +51,13 @@ opts=Trollop::options do
   opt :modem, "Modem (defaults to BPSK31)", :type => :string
   opt :afc, "Set AFC on or off (defaults to on)", :type => :string
   opt :squelch, "Set the squelch level (defaults to 3.0)", :type => :string
-  opt :uuclient, "Use STDIO for send/recv as a uucico pipe"
   opt :listen, "Listen for n seconds incoming data (use 0 to listen forever)", :type => :string
+  opt :quality, "Minimum quality level to lock onto a signal (0-100, defaults to 25)", :type => :string
   opt :wander, "Wander up and down the audio passband looking for signals"
   opt :common, "List common PSK31 dial frequencies"
   opt :modems, "List available FLDigi modems"
   opt :list, "List available FLDigi API commands"
+  opt :debug, "Show extra debug info (not useful for most users)"
 end
 
 # If the user asks, give him some common PSK31 dial frequencies.
@@ -101,6 +101,13 @@ if opts[:modems_given]
   exit
 end
 
+# Set the minimum interesting signal quality.
+if opts[:quality_given]
+  qual=opts[:quality].to_i
+else
+  qual=25
+end
+
 # Give the user a list of possible API calls (very few users will have
 # a use for this).
 if opts[:list_given]
@@ -114,14 +121,6 @@ if opts[:squelch_given]
   else
     fldigi.squelch=true
     fldigi.slevel=opts[:squelch].to_f
-  end
-end
-
-if opts[:afc_given]
-  if opts[:afc]=="on" or opts[:afc]=="ON" or opts[:afc]=="On"
-    fldigi.afc=true
-  else
-    fldigi.afc=false
   end
 end
 
@@ -149,6 +148,20 @@ if opts[:call_given]
   fldigi.call=opts[:call].upcase
 end
 
+if opts[:afc_given]
+  if opts[:afc]=="on" or opts[:afc]=="ON" or opts[:afc]=="On"
+    fldigi.afc=true
+  else
+    fldigi.afc=false
+  end
+
+  # Certain modes don't allow AFC, so turn it off so the call won't
+  # fail.
+  if fldigi.modem=="CW"
+    fldigi.afc=false
+  end
+end
+
 # -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 # Do the needful.
 # -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
@@ -164,62 +177,16 @@ fldigi.spot=true
 fldigi.clear_tx_data()
 fldigi.get_tx_data()
 fldigi.get_rx_data()
-fldigi.config()
-
-# Either send a CQ, go into interactive mode, or send the message
-# specified by the user.
- if opts[:uuclient_given]
-
-  m=Mutex.new
-  incoming=""
-  incoming_old=nil
-  last_time=0
-
-  t=Thread.new do
-    while true
-      c=STDIN.getch
-      if c=='q'
-        exit
-      end
-      m.synchronize do
-        incoming=incoming+c
-      end
-      last_time=Time.now.to_f
-    end
+if !fldigi.config()
+  fldigi.errors.each do |e|
+    puts e
   end
-  t.abort_on_exception=true
+  puts "Setup failed. If indicated failure included main.set_frequency, you may need to specify --norigctl"
+  exit
+end
 
-  mode="rx"
-  while true
-    #puts "mode:  #{mode}\r"
-
-    if Time.now.to_f-last_time < 2.0
-      if mode!="tx"
-        #puts "Switching to transmit...\r"
-        mode="tx"
-        fldigi.send_buffer(true)
-      else
-        m.synchronize do
-          if incoming.length>0
-            fldigi.add_tx_string(incoming)
-            #puts "#{Time.now.to_f-last_time}: -->#{incoming}<--"
-            incoming=""
-          end
-        end
-      end
-      
-    else
-      if mode!="rx"
-        #puts "Switching to receive...\r"
-        mode="rx"
-        sleep 3
-      end
-    end
-
-    sleep 1
-  end
-
-elsif opts[:cq_given] and opts[:call_given]
+# Either send a CQ or send the message specified by the user.
+if opts[:cq_given] and opts[:call_given]
   fldigi.cq()
   fldigi.send_buffer(true)
 elsif opts[:message_given]
@@ -227,16 +194,17 @@ elsif opts[:message_given]
   fldigi.send_buffer(true)
 end
 
-# When we're done with everything else, go into an infinite listen
-# loop if requested.
+# When we're done transmitting, go into an infinite listen loop (if
+# requested).
 now=Time.now().to_i
 if opts[:listen_given]
   search=true
   while true
     q=fldigi.quality().to_i
     # If the signal quality is less than 25, search for a (new) signal
-    # to watch.
-    if q<25
+    # to watch. 50/50 chance of searching up or down (assuming the NSA
+    # hasn't tinkered with your random number generator).
+    if q<qual
       if opts[:wander_given]
         if rand(2)==0
           fldigi.search_up()
