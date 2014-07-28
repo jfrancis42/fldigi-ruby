@@ -148,12 +148,12 @@ class Fldigi
     # Turn spot on/off (true/false).
     if @spot!=@spot_old
       ret=self.sendcmd("spot.get_auto")
-      if (ret==1 and @spot==true) or (ret==0 and @spot==false)
+      if (ret==1 and @spot==true) or (ret==0 and @spot==false) or (ret==@spot)
         @spot_old=@spot
       else
         self.sendcmd("spot.set_auto", @spot)
         ret=self.sendcmd("spot.get_auto")
-        if (ret==1 and @spot==true) or (ret==0 and @spot==false)
+      if (ret==1 and @spot==true) or (ret==0 and @spot==false) or (ret==@spot)
           @spot_old=@spot
         else
           puts "spot.set_auto failed <-----------------------" if @debug
@@ -165,12 +165,12 @@ class Fldigi
     # Turn AFC on/off (true/false).
     if @afc!=@afc_old
       ret=self.sendcmd("main.get_afc")
-      if (ret==1 and @afc==true) or (ret==0 and @afc==false)
+      if (ret==1 and @afc==true) or (ret==0 and @afc==false) or (ret==@afc)
         @afc_old=@afc
       else
         self.sendcmd("main.set_afc", @afc)
         ret=self.sendcmd("main.get_afc")
-        if (ret==1 and @afc==true) or (ret==0 and @afc==false)
+      if (ret==1 and @afc==true) or (ret==0 and @afc==false) or (ret==@afc)
           @afc_old=@afc
         else
           puts "main.set_afc failed <-----------------------" if @debug
@@ -198,12 +198,12 @@ class Fldigi
     # Turn RSID receive on/off (true/false).
     if @rsid!=@rsid_old
       ret=self.sendcmd("main.get_rsid")
-      if (ret==1 and @rsid==true) or (ret==0 and @rsid==false)
+      if (ret==1 and @rsid==true) or (ret==0 and @rsid==false) or (ret==@rsid)
         @rsid_old=@rsid
       else
         self.sendcmd("main.set_rsid", @rsid)
         ret=self.sendcmd("main.get_rsid")
-        if (ret==1 and @rsid==true) or (ret==0 and @rsid==false)
+      if (ret==1 and @rsid==true) or (ret==0 and @rsid==false) or (ret==@rsid)
           @rsid_old=@rsid
         else
           puts "main.set_rsid failed <-----------------------" if @debug
@@ -215,12 +215,12 @@ class Fldigi
     # Turn squelch on/off (true/false).
     if @squelch!=@squelch_old
       ret=self.sendcmd("main.get_squelch")
-      if (ret==1 and @squelch==true) or (ret==0 and @squelch==false)
+      if (ret==1 and @squelch==true) or (ret==0 and @squelch==false) or (ret==@squelch)
         @squelch_old=@squelch
       else
         self.sendcmd("main.set_squelch", @squelch)
         ret=self.sendcmd("main.get_squelch")
-        if (ret==1 and @squelch==true) or (ret==0 and @squelch==false)
+      if (ret==1 and @squelch==true) or (ret==0 and @squelch==false) or (ret==@squelch)
           @squelch_old=@squelch
         else
           puts "main.set_squelch failed <-----------------------" if @debug
