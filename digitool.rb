@@ -82,6 +82,11 @@ else
   fldigi=Fldigi.new()
 end
 
+# Turn on debug if they want it.
+if opts[:debug_given]
+  fldigi.debug=true
+end
+
 # May not need this. Seems to depend on ruby version.
 if !XMLRPC::Config::ENABLE_NIL_PARSER
   v, $VERBOSE=$VERBOSE, nil

@@ -4,9 +4,8 @@ update.ksh
 index.md
 index.html
 index.html.orig
-release_checklist.md
-release_checklist.html
-functions.html
-functions.pdf
-lib/hamnet.extra.rb
+release_checklist.*
+functions.*
+hamale.md
+hamale.html
 

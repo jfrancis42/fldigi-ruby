@@ -24,7 +24,7 @@ require 'xmlrpc/client'
 require 'thread'
 
 class Fldigi
-  attr_accessor :rigctl, :dial_freq, :carrier, :call, :modem, :afc, :rsid, :sideband, :squelch, :slevel, :spot, :delay, :grid, :phg, :band, :offset, :start_wait, :char_wait
+  attr_accessor :rigctl, :dial_freq, :carrier, :call, :modem, :afc, :rsid, :sideband, :squelch, :slevel, :spot, :delay, :grid, :phg, :band, :offset, :start_wait, :char_wait, :debug
 
   # Do the initial setup.  All arguments are optional, default is
   # rigctl, localhost, standard port.  If you have no rig control,
@@ -64,6 +64,7 @@ class Fldigi
     @offset_old=0
     @start_wait=10
     @char_wait=2
+    @debug=false
 
     # Propnet stuff.
     @band=nil
@@ -81,15 +82,23 @@ class Fldigi
   # Send an XML-RPC command to FLDigi.
   def sendcmd(cmd, param=-1)
     if param==-1
-      return @srvr.call(cmd)
+      puts "sendcmd(#{cmd})" if @debug
+      n=@srvr.call(cmd)
+      puts "result: #{n}" if @debug
+      return n
     else
-      return @srvr.call(cmd,param)
+      puts "sendcmd(#{cmd} #{param})" if @debug
+      n=@srvr.call(cmd,param)
+      puts "result: #{n}" if @debug
+      return n
     end
   end
 
   # Push all of the changed settings to FLDigi.  Anything that has not
   # changed is not pushed (to save time).
   def config
+
+    status=true
 
     # Set the audio carrier, but only if it's not false (so other
     # items can be updated without worrying about a little bit of
@@ -102,10 +111,9 @@ class Fldigi
     end
     
     # Set the modem.  Also, take a stab at setting the timeouts for
-    # that modem.
+    # that modem.  ToDo: Add to these as additional modems are checked
+    # out, and save the user some hassle.
     if @modem!=@modem_old
-      @modem_old=@modem
-
       case @modem
       when "BPSK31"
         @start_wait=5
@@ -124,32 +132,49 @@ class Fldigi
         @char_wait=2
       end
 
-      if @modem!=self.sendcmd("modem.get_name")
+      if @modem==self.sendcmd("modem.get_name")
+        @modem_old=@modem
+      else
         self.sendcmd("modem.set_by_name", @modem)
-        if @modem!=self.sendcmd("modem.get_name")
-          return false
+        if @modem==self.sendcmd("modem.get_name")
+          @modem_old=@modem
+        else
+          puts "modem.set_name failed <-----------------------" if @debug
+          status=false
         end
       end
     end
     
     # Turn spot on/off (true/false).
     if @spot!=@spot_old
-      @spot_old=@spot
-      if @spot!=self.sendcmd("spot.get_auto")
+      ret=self.sendcmd("spot.get_auto")
+      if (ret==1 and @spot==true) or (ret==0 and @spot==false)
+        @spot_old=@spot
+      else
         self.sendcmd("spot.set_auto", @spot)
-        if @spot!=self.sendcmd("spot.get_auto")
-          return false
+        ret=self.sendcmd("spot.get_auto")
+        if (ret==1 and @spot==true) or (ret==0 and @spot==false)
+          @spot_old=@spot
+        else
+          puts "spot.set_auto failed <-----------------------" if @debug
+          status=false
         end
       end
     end
 
     # Turn AFC on/off (true/false).
     if @afc!=@afc_old
-      @afc_old=@afc
-      if @afc!=self.sendcmd("main.get_afc")
+      ret=self.sendcmd("main.get_afc")
+      if (ret==1 and @afc==true) or (ret==0 and @afc==false)
+        @afc_old=@afc
+      else
         self.sendcmd("main.set_afc", @afc)
-        if @afc!=self.sendcmd("main.get_afc")
-          return false
+        ret=self.sendcmd("main.get_afc")
+        if (ret==1 and @afc==true) or (ret==0 and @afc==false)
+          @afc_old=@afc
+        else
+          puts "main.set_afc failed <-----------------------" if @debug
+          status=false
         end
       end
     end
@@ -157,45 +182,65 @@ class Fldigi
     # Set the sideband ("USB"/"LSB").  ToDo: make sure this is
     # correct.
     if @sideband!=@sideband_old
-      @sideband_old=@sideband
-      if @sideband!=self.sendcmd("main.get_sideband")
+      if @sideband==self.sendcmd("main.get_sideband")
+        @sideband_old=@sideband
+      else
         self.sendcmd("main.set_sideband", @sideband)
-        if @sideband!=self.sendcmd("main.get_sideband")
-          return false
+        if @sideband==self.sendcmd("main.get_sideband")
+          @sideband_old=@sideband
+        else
+          puts "main.set_sideband failed <-----------------------" if @debug
+          status=false
         end
       end
     end
 
     # Turn RSID receive on/off (true/false).
     if @rsid!=@rsid_old
-      @rsid_old=@rsid
-      if @rsid!=self.sendcmd("main.get_rsid")
+      ret=self.sendcmd("main.get_rsid")
+      if (ret==1 and @rsid==true) or (ret==0 and @rsid==false)
+        @rsid_old=@rsid
+      else
         self.sendcmd("main.set_rsid", @rsid)
-        if @rsid!=self.sendcmd("main.get_rsid")
-          return false
+        ret=self.sendcmd("main.get_rsid")
+        if (ret==1 and @rsid==true) or (ret==0 and @rsid==false)
+          @rsid_old=@rsid
+        else
+          puts "main.set_rsid failed <-----------------------" if @debug
+          status=false
         end
       end
     end
     
     # Turn squelch on/off (true/false).
     if @squelch!=@squelch_old
-      @squelch_old=@squelch
-      if @squelch!=self.sendcmd("main.get_squelch")
+      ret=self.sendcmd("main.get_squelch")
+      if (ret==1 and @squelch==true) or (ret==0 and @squelch==false)
+        @squelch_old=@squelch
+      else
         self.sendcmd("main.set_squelch", @squelch)
-        if @squelch!=self.sendcmd("main.get_squelch")
-          return false
+        ret=self.sendcmd("main.get_squelch")
+        if (ret==1 and @squelch==true) or (ret==0 and @squelch==false)
+          @squelch_old=@squelch
+        else
+          puts "main.set_squelch failed <-----------------------" if @debug
+          status=false
         end
       end
     end
     
     # Set the squelch value (3.0 seems to work well).
-    @slevel=@slevel.to_f
     if @slevel!=@slevel_old
       @slevel_old=@slevel
-      if @slevel!=self.sendcmd("main.get_squelch_level")
+      if @slevel.to_f==self.sendcmd("main.get_squelch_level").to_f
+        @slevel=@slevel.to_f
+      else
         self.sendcmd("main.set_squelch_level", @slevel)
-        if @slevel!=self.sendcmd("main.get_squelch_level")
-          return false
+        if @slevel==self.sendcmd("main.get_squelch_level")
+          @slevel=@slevel.to_f
+        else
+          puts "main.set_squelch_level failed <-----------------------" if @debug
+          status=false
         end
       end
     end
@@ -235,12 +280,13 @@ class Fldigi
         self.sendcmd("main.set_frequency", @dial_freq+@offset.to_f)
         sleep 0.5
         if @dial_freq+@offset.to_i!=self.sendcmd("main.get_frequency").to_f
-          return false
+          puts "main.set_frequency failed <-----------------------" if @debug
+          status=false
         end
       end
     end
 
-    return true
+    return status
   end  
 
   # Set FLDigi to receive (immediate).

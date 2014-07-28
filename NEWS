@@ -1,5 +1,14 @@
 Version History:
 
+0.1.3 - 07/28/2014 - jfrancis - I kind of knew in the back of my mind
+that I wasn't handling return status right, but it finally bit me in
+the butt on a camping trip this past weekend, so I cleaned it up.
+Still more to do, but at least now it properly checks things in
+fldigi.config() and properly returns status.  I'm going to further
+clean it up so it returns *why* it failed, but at least now it seems
+to properly check things.  I also added the fldigi.debug variable,
+which, if set to true, will spew debug data to stdout.
+
 0.1.2 - 07/16/2014 - jfrancis - Setting the carrier was broken.  The
 code was comparing the current carrier with what the carrier was
 previously set to, and only pushing the change if they differed.  This
