@@ -154,12 +154,6 @@ if opts[:afc_given]
   else
     fldigi.afc=false
   end
-
-  # Certain modes don't allow AFC, so turn it off so the call won't
-  # fail.
-  if fldigi.modem=="CW"
-    fldigi.afc=false
-  end
 end
 
 # -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
@@ -178,8 +172,8 @@ fldigi.clear_tx_data()
 fldigi.get_tx_data()
 fldigi.get_rx_data()
 if !fldigi.config()
-  fldigi.errors.each do |e|
-    puts e
+  while fldigi.errors.length>0
+    puts fldigi.errors.pop
   end
   puts "Setup failed. If indicated failure included main.set_frequency, you may need to specify --norigctl"
   exit

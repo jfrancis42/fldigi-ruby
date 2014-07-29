@@ -192,29 +192,24 @@ class Fldigi
       end
     end
 
-    # Turn AFC on/off (true/false). Certain modes don't allow AFC, and
-    # trying to set it will return an error.  If attempting to set one
-    # of these modes, ignore the requested AFC setting.
-    if (@afc!="NULL" and @afc!="CW" and @afc!="CTSTIA" and @afc!="DOMEX4" and @afc!="DOMEX5" and 
-        @afc!="DOMEX8" and @afc!="DOMX11" and @afc!="DOMX16" and @afc!="DOMX22" and @afc!="DOMX44" and 
-        @afc!="DOMX88" and @afc!="FELDHELL" and @afc!="SLOWHELL" and @afc!="HELLX5" and 
-        @afc!="HELLX9" and @afc!="FSKHELL" and @afc!="FSKH105" and @afc!="HELL80" and 
-        @afc!="MT63-500S" and @afc!="MT63-500L" and @afc!="MT63-1KS" and @afc!="MT63-1KL" and 
-        @afc!="MT63-2KS" and @afc!="MT63-2KL" and @afc!="OLIVIA" and @afc!="Olivia-8-250" and 
-        @afc!="Olivia-4-500" and @afc!="Olivia-8-500" and @afc!="Olivia-8-1K" and @afc!="Olivia-16-1K" and 
-        @afc!="Olivia-32-1K" and @afc!="Olivia-64-2K" and @afc!="THOR4" and @afc!="THOR5" and 
-        @afc!="THOR8" and @afc!="THOR16" and @afc!="THOR22" and @afc!="THOR25x4" and @afc!="THOR50x2" and 
-        @afc!="THOR100" and @afc!="SSB" and @afc!="WWV" and @afc!="ANALYSIS") and (@afc!=@afc_old)
+    # Turn AFC on/off (true/false). Some modes don't work with
+    # AFC. There seems to be a great deal of inconsistency (a bug,
+    # maybe?) in reading the AFC value back from FLDigi. Every test I
+    # can come up with points to a bug in their code, not mine. Until
+    # we can get this sorted out, don't consider failure to set AFC as
+    # fatal. Just unset it, and continue on. ToDo: Verify bug in
+    # FLDigi, then fix.
+    if (@afc!=@afc_old)
       if torf(self.sendcmd("main.get_afc"))==@afc
         @afc_old=@afc
       else
         self.sendcmd("main.set_afc", @afc)
+        sleep 0.25
         if torf(self.sendcmd("main.get_afc"))==@afc
           @afc_old=@afc
         else
-          self.error("main.set_afc failed with value #{@afc}")
-          puts "main.set_afc failed" if @debug
-          status=false
+          @afc=false
+          puts "main.set_afc failed, so leaving turned off" if @debug
         end
       end
     end
@@ -422,7 +417,7 @@ class Fldigi
         end
         waited=0
         max=@start_wait
-        
+
         result=""
         while waited<max
           waited=waited+1

@@ -2,3 +2,4 @@
  - Provide a function to read and return actual carrier frequency.
  - Provide a function to read and return actual modem.
  - Add some automated/regression testing.
+ - Verify AFC bug in FLDigig.
