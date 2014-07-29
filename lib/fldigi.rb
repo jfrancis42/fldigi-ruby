@@ -20,6 +20,7 @@
 #
 # XMLRPC::Config::ENABLE_NIL_PARSER=true
 
+require 'time'
 require 'xmlrpc/client'
 require 'thread'
 
@@ -392,7 +393,7 @@ class Fldigi
 
   # Send the currently buffered data using the carrier, mode,
   # frequency, etc. currently configured.  The current code will wait
-  # up to @start_wait (10) seconds for the first character to be
+  # up to @start_wait seconds for the first character to be
   # transmitted (this gives time for really slow modems to get
   # rolling).  Once the first sent character is detected, it makes
   # sure it sees as least one character every @char_wait (2) seconds
@@ -409,6 +410,8 @@ class Fldigi
   def send_buffer(verbose=false)
     if @message.length > 0
       self.transmit()
+      send_length=@message.length
+      send_start=Time.now()
       show=""
       while @message.length > 0
         @m.synchronize do
@@ -435,6 +438,8 @@ class Fldigi
       end
     end
     self.receive()
+    send_end=Time.now()
+    puts "#{send_length} characters sent in #{(send_end-send_start).to_i} seconds, #{((((send_length/(send_end.to_f-send_start.to_f))*10)+0.5).to_i)/10.to_f} chars/sec." if @debug
     return show
   end
 

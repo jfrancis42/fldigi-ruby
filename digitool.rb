@@ -171,11 +171,20 @@ fldigi.spot=true
 fldigi.clear_tx_data()
 fldigi.get_tx_data()
 fldigi.get_rx_data()
+flag=false
 if !fldigi.config()
   while fldigi.errors.length>0
-    puts fldigi.errors.pop
+    tmp=fldigi.errors.pop.to_s
+    puts tmp
+    if tmp=~/main\.set_frequency/
+      flag=true
+    end
   end
-  puts "Setup failed. If indicated failure included main.set_frequency, you may need to specify --norigctl"
+  if flag
+    puts "Setup failed. You may need to specify --norigctl"
+  else
+    puts "Setup failed."
+  end
   exit
 end
 
