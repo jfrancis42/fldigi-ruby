@@ -307,7 +307,9 @@ class Fldigi
     # "1000" on the other radio, as well.  There's no good, clean,
     # all-purpose solution to this one, but at least it allows for
     # consistent and automated use of the library without having to do
-    # the conversions in your own code.
+    # the conversions in your own code. We give ourselves two tries to
+    # get the freq right, since some rigs seem to act a bit odd when
+    # changing bands.
     @dial_freq=@dial_freq.to_i
     if (@dial_freq!=@dial_freq_old or @offset!=@offset_old) and @rigctl
       @dial_freq_old=@dial_freq
@@ -316,9 +318,13 @@ class Fldigi
         self.sendcmd("main.set_frequency", @dial_freq+@offset.to_f)
         sleep 0.5
         if @dial_freq+@offset.to_i!=self.sendcmd("main.get_frequency").to_f
-          self.error("main.set_frequency failed with value #{@dial_freq}")
-          puts "main.set_frequency failed" if @debug
-          status=false
+          self.sendcmd("main.set_frequency", @dial_freq+@offset.to_f)
+          sleep 0.5
+          if @dial_freq+@offset.to_i!=self.sendcmd("main.get_frequency").to_f
+            self.error("main.set_frequency failed with value #{@dial_freq}")
+            puts "main.set_frequency failed" if @debug
+            status=false
+          end
         end
       end
     end

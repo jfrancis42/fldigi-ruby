@@ -1,5 +1,16 @@
 Version History:
 
+0.1.6 - 08/18/2014 - jfrancis - When the frequency is set, try a
+second time if the first set fails. Some radios seem to work fine if
+changing frequencies within the same band, but require two tries if
+changing bands. If the frequency change fails on the first try, try a
+second time, then fail if the second change fails, as well.
+
+0.1.5 - 07/xx/2014 - jfrancis - Did a bunch of general code
+clean-up. Looks like a bug in FLDigi related to AFC status
+reporting. I can reproduce. Will talk with the FLDigi guys. Added CPS
+output to debug data for each batch of data sent.
+
 0.1.4 - 07/28/2014 - jfrancis - Ok, it turns out some XMLRPC libs
 return 1 and 0 for true and false, others return true and false.
 Changed code to account for both.
