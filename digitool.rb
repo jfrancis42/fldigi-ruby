@@ -216,7 +216,7 @@ if opts[:listen_given]
         end
       end
     else
-      puts "(#{q} #{fldigi.freq()} #{Time.now().to_s}) #{fldigi.get_rx_data().gsub(/(\n|\r)/,' ')}"
+      puts "(#{q} #{fldigi.radio_freq()} #{Time.now().to_s}) #{fldigi.get_rx_data().gsub(/(\n|\r)/,' ')}"
     end
 
     # Listen for however long was specified (or forever if zero).

@@ -80,7 +80,7 @@ grid=nil
 if opts[:grid_given]
   fldigi.grid=opts[:grid]
   if opts[:grid].length!=6
-    puts "--pgrid must be six characters"
+    puts "--grid must be six characters"
     exit
   end
 else

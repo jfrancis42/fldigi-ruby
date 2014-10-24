@@ -34,6 +34,12 @@ sudo gem install fldigi
 
 This will go fetch and install the latest version of the gem on your machine.  As the code is still under development, it might be worthwhile to update it regularly (I keep finding bugs and squashing them).  If you have Windows, you'll need to do whatever the equivalent function is to download and install the gem.  I've tested this pretty heavily on Mac and Linux, but I don't own a Windows machine, so I've never tested it in that environment.  I *should* work, but I honestly don't know.  Once you've got the libraries installed, you're 3/3 done with your preparations.
 
+You will also need the Digest CRC gem (digest-crc) written by Hal Brodigan.  This gem is necessary for computing the CCITT CRC16 checksum used for propnet.  Install it like this:
+
+```bash
+sudo gem install digest-crc
+```
+
 ## How to Use
 
 To use the API, you'll first need to require it:

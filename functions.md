@@ -482,16 +482,6 @@ Queue the pre-built PropNET packet (must call propnet_config() and
  config() first).  Requires @grid, @call, @band, and @phg to be set.
  Call send_buffer() after to start the actual transmission.
 
-### crc16(buf, crc=0)()
-```ruby
-def crc16(buf, crc=0)
-```
-
-CRC16 function for use with propnet.  "Borrowed" from:
-http://www.hadermann.be/blog/32/ruby-crc16-implementation/
-
-***
-
 ## Misc
 
 ***
