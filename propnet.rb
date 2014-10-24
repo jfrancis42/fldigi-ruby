@@ -33,8 +33,11 @@ end
 
 fldigi=Fldigi.new()
 
+# May not need this. Seems to depend on ruby version.
 if !XMLRPC::Config::ENABLE_NIL_PARSER
+  v, $VERBOSE=$VERBOSE, nil
   XMLRPC::Config::ENABLE_NIL_PARSER=true
+  $VERBOSE=v
 end
 
 if opts[:psk63_given]
