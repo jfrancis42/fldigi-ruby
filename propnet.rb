@@ -105,8 +105,10 @@ fldigi.config()
 
 if fldigi.delay
   while true
+    puts "#{Time.now().to_s} Sending beacon..."
     fldigi.propnet()
     fldigi.send_buffer()
+    puts "#{Time.now().to_s} Done.\n\n"
     sleep fldigi.delay
   end
 else
