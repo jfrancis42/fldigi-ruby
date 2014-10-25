@@ -598,10 +598,18 @@ class Fldigi
         @delay=3600/(@phg[7,1].to_i)
       end
 
-      # Construct the actual string to be sent.
-      tmp="#{@call.upcase}>#{@fsym}:[#{@grid}]#{@phg}/"
-      tmp=tmp+'^'+(Digest::CRC16CCITT.hexdigest(tmp)).upcase
-      @phgtext="FOR INFO: http://www.PropNET.org\n"+tmp
+      # Construct the actual string to be sent. Do some farting around
+      # with case to be consistent with what I actually see on the
+      # air.
+      tmpmsg="#{@call.upcase}>#{@fsym}:[#{@grid.downcase}]#{@phg.upcase}/"
+      tmpcrc=(Digest::CRC16CCITT.hexdigest(tmpmsg)).upcase
+      # Make sure the CRC is actually four characters long. Doesn't
+      # happen often, but it does happen (and I'm guessing won't be
+      # accepted by PropNet).
+      while tmpcrc.length<4
+        tmpcrc="0"+tmpcrc
+      end
+      @phgtext="FOR INFO: http://www.PropNET.org\n"+tmpmsg+"^"+tmpcrc+"\n"
     end
   end
 
