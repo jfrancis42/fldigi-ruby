@@ -23,7 +23,6 @@
 require 'time'
 require 'xmlrpc/client'
 require 'thread'
-require 'digest/crc16_ccitt'
 
 # Turn 1/0 into false/true (some XMLRPC libraries seem to return 1/0,
 # others true/false).  This cleans up the code a bit.
@@ -546,6 +545,8 @@ class Fldigi
   # @band, @grid, @phg, or @call changes between calls to propnet(),
   # this method (and config()) must be called again.
   def propnet_config
+    require 'digest/crc16_ccitt'
+
     if @call and @grid and @band and @phg
       
       # We don't want the carrier wandering around while doing
