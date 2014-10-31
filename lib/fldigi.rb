@@ -610,7 +610,7 @@ class Fldigi
       while tmpcrc.length<4
         tmpcrc="0"+tmpcrc
       end
-      @phgtext="FOR INFO: http://www.PropNET.org\n"+tmpmsg+"^"+tmpcrc+"\n"
+      @phgtext="\n\nFOR INFO: http://www.PropNET.org\n"+tmpmsg+"^"+tmpcrc+"\n"
     end
   end
 
