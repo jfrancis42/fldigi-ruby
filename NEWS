@@ -1,5 +1,10 @@
 Version History:
 
+0.1.12 - 12/18/2014 - jfrancis - Ok, I admit it.  I'm terrible at
+remembering to update this file with new revs of code.  I'll try to be
+better.  This version adds the option to digitool to write output to a
+file, as well as the screen.
+
 0.1.6 - 08/18/2014 - jfrancis - When the frequency is set, try a
 second time if the first set fails. Some radios seem to work fine if
 changing frequencies within the same band, but require two tries if

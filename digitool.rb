@@ -57,12 +57,13 @@ opts=Trollop::options do
   opt :common, "List common PSK31 dial frequencies"
   opt :modems, "List available FLDigi modems"
   opt :list, "List available FLDigi API commands"
+  opt :file, "Write output to a file", :type => :string
   opt :debug, "Show extra debug info (not useful for most users)"
 end
 
 # If the user asks, give him some common PSK31 dial frequencies.
 if opts[:common_given]
-  puts "Common dial frequencies (plus a carrier of roughly 500-2500hz):"
+  puts "Common dial frequencies (plus a carrier of typically 500-2500hz):"
   puts "3580000, 7080000, 10142000, 14070000, 18100000, 21070000, 24920000, 28120000, 50290000"
   exit
 end
@@ -85,6 +86,13 @@ end
 # Turn on debug if they want it.
 if opts[:debug_given]
   fldigi.debug=true
+end
+
+# See if the user wants to write output to a file.
+fname=nil
+file=nil
+if opts[:file_given]
+  fname=opts[:file]
 end
 
 # May not need this. Seems to depend on ruby version.
@@ -174,9 +182,9 @@ fldigi.get_rx_data()
 flag=false
 if !fldigi.config()
   while fldigi.errors.length>0
-    tmp=fldigi.errors.pop.to_s
-    puts tmp
-    if tmp=~/main\.set_frequency/
+    error=fldigi.errors.pop.to_s
+    puts error
+    if error=~/main\.set_frequency/
       flag=true
     end
   end
@@ -195,6 +203,12 @@ if opts[:cq_given] and opts[:call_given]
 elsif opts[:message_given]
   fldigi.add_tx_string(opts[:message])
   fldigi.send_buffer(true)
+end
+
+# If the user wants to log output to a file, open that file.
+if fname
+  file=File.open(fname,'w')
+  file.sync=true
 end
 
 # When we're done transmitting, go into an infinite listen loop (if
@@ -216,7 +230,11 @@ if opts[:listen_given]
         end
       end
     else
-      puts "(#{q} #{fldigi.radio_freq()} #{Time.now().to_s}) #{fldigi.get_rx_data().gsub(/(\n|\r)/,' ')}"
+      rxdata=fldigi.get_rx_data().gsub(/(\n|\r)/,' ')
+      puts "(#{q} #{fldigi.radio_freq()} #{Time.now().to_s}) #{rxdata}"
+      if fname
+        file.puts "(#{q} #{fldigi.radio_freq()} #{Time.now().to_s}) #{rxdata}"
+      end
     end
 
     # Listen for however long was specified (or forever if zero).
@@ -228,4 +246,9 @@ if opts[:listen_given]
 
     sleep 3
   end
+end
+
+# Close the output file (assuming it was open).
+if fname
+  file.close()
 end
