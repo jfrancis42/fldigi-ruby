@@ -58,6 +58,7 @@ opts=Trollop::options do
   opt :modems, "List available FLDigi modems"
   opt :list, "List available FLDigi API commands"
   opt :file, "Write output to a file", :type => :string
+  opt :filetimestamp, "Write output to a file named for current date/time"
   opt :debug, "Show extra debug info (not useful for most users)"
 end
 
@@ -93,6 +94,11 @@ fname=nil
 file=nil
 if opts[:file_given]
   fname=opts[:file]
+end
+
+# See if the user wants auto file naming.
+if opts[:filetimestamp_given]
+  fname="fldigi_" + Time.now().to_s.gsub(/ /,"_") + ".log"
 end
 
 # May not need this. Seems to depend on ruby version.

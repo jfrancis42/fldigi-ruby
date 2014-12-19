@@ -1,7 +1,7 @@
 Gem::Specification.new do |s|
   s.name        = 'fldigi'
-  s.version     = '0.1.13'
-  s.date        = '2014-12-18'
+  s.version     = '0.1.14'
+  s.date        = '2014-12-19'
   s.summary     = "A library for talking to FLDigi."
   s.description = "A library for talking to FLDigi."
   s.authors     = ["Jeff Francis, N0GQ"]

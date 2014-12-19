@@ -1,6 +1,9 @@
 Version History:
 
-0.1.12 - 12/18/2014 - jfrancis - Ok, I admit it.  I'm terrible at
+0.1.14 - 12/19/2014 - jfrancis - Write output to an automatically
+named file.  File name is date and time stamp.
+
+0.1.13 - 12/18/2014 - jfrancis - Ok, I admit it.  I'm terrible at
 remembering to update this file with new revs of code.  I'll try to be
 better.  This version adds the option to digitool to write output to a
 file, as well as the screen.
