@@ -1,5 +1,10 @@
 Version History:
 
+0.1.15 - 01/04/2015 - jfrancis - Added --getmodem option to
+digitool.rb.  Also added a get_modem() method to the object in
+preparation for some future functionality (at this point, simply
+replaces the API call "modem.get_name").
+
 0.1.14 - 12/19/2014 - jfrancis - Write output to an automatically
 named file.  File name is date and time stamp.
 

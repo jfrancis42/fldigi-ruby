@@ -48,6 +48,7 @@ opts=Trollop::options do
   opt :norigctl, "Use if FLDigi is not configured to remotely control your radio frequency"
   opt :carrier, "Audio center frequency (hz, defaults to 1000)", :type => :string
   opt :getfreq, "Get the current carrier frequency"
+  opt :getmodem, "Get the current modem"
   opt :modem, "Modem (defaults to BPSK31)", :type => :string
   opt :afc, "Set AFC on or off (defaults to on)", :type => :string
   opt :squelch, "Set the squelch level (defaults to 3.0)", :type => :string
@@ -176,6 +177,11 @@ end
 
 if opts[:getfreq_given]
   puts fldigi.radio_freq()
+  exit
+end
+
+if opts[:getmodem_given]
+  puts fldigi.get_modem()
   exit
 end
 

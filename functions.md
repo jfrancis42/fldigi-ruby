@@ -365,6 +365,13 @@ to (it can drift if AFC is on, or the user clicks the waterfall)).
 
 ***
 
+### get_modem()
+```ruby
+def get_modem()
+```
+
+Gets the name of the currently selected modem.
+
 ### send_buffer()
 ```ruby
 def send_buffer(verbose=false)

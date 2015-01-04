@@ -164,15 +164,15 @@ class Fldigi
         @start_wait=10
         @char_wait=2
       end
-
-      if @modem==self.sendcmd("modem.get_name")
+      
+      if @modem==self.get_modem()
         @modem_old=@modem
       else
         self.sendcmd("modem.set_by_name", @modem)
-        if @modem==self.sendcmd("modem.get_name")
+        if @modem==self.get_modem()
           @modem_old=@modem
         else
-          self.error("modem.set_name failed with value #{@modem}")
+          self.error("modem.set_by_name failed with value #{@modem}")
           puts "modem.set_name failed" if @debug
           status=false
         end
@@ -406,6 +406,11 @@ class Fldigi
   # freq() above).
   def radio_freq
     return (self.sendcmd("main.get_frequency").to_i+self.get_carrier()).to_i
+  end
+
+  # Get the current modem name.
+  def get_modem
+    return self.sendcmd("modem.get_name")
   end
 
   # Send the currently buffered data using the carrier, mode,
