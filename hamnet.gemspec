@@ -1,7 +1,7 @@
 Gem::Specification.new do |s|
   s.name        = 'hamnet'
-  s.version     = '0.0.1'
-  s.date        = '2014-07-15'
+  s.version     = '0.0.3'
+  s.date        = '2015-01-05'
   s.summary     = "A library for constructing fldigi network packets."
   s.description = "A library for constructing fldigi network packets."
   s.authors     = ["Jeff Francis, N0GQ"]
