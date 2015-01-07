@@ -11,10 +11,11 @@ hamale.html
 uuclient.rb
 *.log
 images/*
-lib/hamnet.extra.rb
+hamnet.extra.rb
 modems.txt
 test_*
 allbands.ksh
 api.txt
 ui.rb
 psksms.rb
+sample.ping*

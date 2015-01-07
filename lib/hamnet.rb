@@ -20,8 +20,8 @@ HAMNET_FRAME_SIMPLE=1
 HAMNET_FRAME_BASE64=2
 HAMNET_FRAME_COMPRESSED_BASE64=3
 # To do.
-#HAMNET_FRAME_PING=4
-#HAMNET_FRAME_PING_REPLY=5
+HAMNET_FRAME_PING=4
+HAMNET_FRAME_PING_REPLY=5
 #HAMNET_FRAME_TELEMETRY=6
 #HAMNET_FRAME_POSITION=7
 
@@ -48,16 +48,16 @@ class Frame
     @wiredata=nil
     @userdata=nil
     @crc=nil
-    @valid=nil
+    @valid=false
 
     @frompad=@from
     while @frompad.length<9
-      @frompad=@frompad+" "
+      @frompad=@frompad+":"
     end
 
     @topad=@to
     while @topad.length<9
-      @topad=@topad+" "
+      @topad=@topad+":"
     end
   end
 
@@ -79,12 +79,16 @@ class TxFrame < Frame
     @userdata=userdata
 
     sendtype=type
-    if @done or @type==HAMNET_FRAME_ACK
+    if @done or @type==HAMNET_FRAME_ACK or @type==HAMNET_FRAME_PING or @type==HAMNET_FRAME_PING_REPLY
       sendtype=(sendtype|128)
     end
 
     # Do the needful with the payload.
     case @type
+    when HAMNET_FRAME_PING
+      message=@frompad+@topad+sprintf("%02x",sendtype).downcase+sprintf("%02x",@sequence).downcase
+    when HAMNET_FRAME_PING_REPLY
+      message=@frompad+@topad+sprintf("%02x",sendtype).downcase+sprintf("%02x",@sequence).downcase+@userdata
     when HAMNET_FRAME_ACK
       message=@frompad+@topad+sprintf("%02x",sendtype).downcase+sprintf("%02x",@sequence).downcase
     when HAMNET_FRAME_SIMPLE
@@ -101,7 +105,7 @@ class TxFrame < Frame
     @crc=sprintf("%08x",Zlib::crc32(message)).downcase
 
     # Set the rest of the fields, and done.
-    @wiredata="<<<#{message}#{@crc}>>>"
+    @wiredata="----------<<<#{message}#{@crc}>>>"
     @valid=true
   end
 end
@@ -114,53 +118,85 @@ class RxFrame < Frame
 
   def initialize(wiredata)
     # First, make sure it's properly delimited.
-    if wiredata=~/^<<<.*>>>$/ and wiredata.length>=31
-      # Remove the "<<<" and ">>>"
-      tmp=wiredata[3,wiredata.length-6]
-      # Extract the crc field.
-      crc=tmp[tmp.length-8,8]
-      tmp=tmp[0,tmp.length-8]
-      # Save this for checking CRC later.
-      crcstring=tmp
-      # Extract and clean the from field.
-      from=tmp[0,9].gsub(" ","")
-      tmp=tmp[9,tmp.length-9]
-      # Extract and clean the to field.
-      to=tmp[0,9].gsub(" ","")
-      tmp=tmp[9,tmp.length-9]
-      # Extract the frame type.
-      type=tmp[0,2].to_i(16)
-      tmp=tmp[2,tmp.length-2]
-      # Extract the sequence number.
-      sequence=tmp[0,2].to_i(16)
-      tmp=tmp[2,tmp.length-2]
-      # See if this is a "done" frame.
-      done=false
-      if type!=(type&127)
-        done=true
-        type=(type&127)
-      end
-      # Create and populate the object.
-      super(from, to, type, sequence, done)
-      @wiredata=wiredata
-      # Decode the payload.
-      case @type
-      when HAMNET_FRAME_ACK
-        @userdata=""
-      when HAMNET_FRAME_SIMPLE
-        @userdata=tmp
-      when HAMNET_FRAME_BASE64
-        @userdata=Base64::strict_decode64(tmp)
-      when HAMNET_FRAME_COMPRESSED_BASE64
-        @userdata=Zlib::Inflate.inflate(Base64::strict_decode64(tmp))
-      end
-      # Calculate and check the CRC.
-      @crc=Zlib::crc32(crcstring).to_s(16).downcase
-      if crc==@crc
-        @valid=true
+    if wiredata=~/^<<<.*?>>>$/ and wiredata.length>=31
+      begin
+        # Remove the "<<<" and ">>>"
+        tmp=wiredata[3,wiredata.length-6]
+        # Extract the crc field.
+        crc=tmp[tmp.length-8,8]
+        tmp=tmp[0,tmp.length-8]
+        # Save this for checking CRC later.
+        crcstring=tmp
+        # Extract and clean the from field.
+        from=tmp[0,9].gsub(":","")
+        tmp=tmp[9,tmp.length-9]
+        # Extract and clean the to field.
+        to=tmp[0,9].gsub(":","")
+        tmp=tmp[9,tmp.length-9]
+        # Extract the frame type.
+        type=tmp[0,2].to_i(16)
+        tmp=tmp[2,tmp.length-2]
+        # Extract the sequence number.
+        sequence=tmp[0,2].to_i(16)
+        tmp=tmp[2,tmp.length-2]
+        # See if this is a "done" frame.
+        done=false
+        if type!=(type&127)
+          done=true
+          type=(type&127)
+        end
+        # Create and populate the object.
+        super(from, to, type, sequence, done)
+        @wiredata=wiredata
+        # Decode the payload.
+        case @type
+        when HAMNET_FRAME_PING
+          @userdata=""
+        when HAMNET_FRAME_PING_REPLY
+          @userdata=tmp
+        when HAMNET_FRAME_ACK
+          @userdata=""
+        when HAMNET_FRAME_SIMPLE
+          @userdata=tmp
+        when HAMNET_FRAME_BASE64
+          @userdata=Base64::strict_decode64(tmp)
+        when HAMNET_FRAME_COMPRESSED_BASE64
+          @userdata=Zlib::Inflate.inflate(Base64::strict_decode64(tmp))
+        end
+        # Calculate and check the CRC.
+        @crc=Zlib::crc32(crcstring).to_s(16).downcase
+        if crc==@crc
+          @valid=true
+        end
+      rescue
+        # This is bad.
+        return nil
       end
     else
-      return false
+      return nil
     end
   end
+end
+
+def sendstring(from, to, type, text, max)
+  sequence=0
+  frames=Array.new()
+  done=false
+
+  while text.length > max
+    chunk=text[0,max]
+    text=text[max,text.length-max]
+    if text.length==0
+      done=true
+    end
+    frames.push(TxFrame.new(from, to, type, sequence, chunk, done))
+    sequence=sequence+1
+  end
+
+  if text.length > 0
+    frames.push(TxFrame.new(from, to, type, sequence, text, true))
+    sequence=sequence+1
+  end
+  
+  return frames                
 end
