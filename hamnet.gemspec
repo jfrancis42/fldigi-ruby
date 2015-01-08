@@ -1,6 +1,6 @@
 Gem::Specification.new do |s|
   s.name        = 'hamnet'
-  s.version     = '0.0.6'
+  s.version     = '0.0.7'
   s.date        = '2015-01-07'
   s.summary     = "A library for constructing fldigi network packets."
   s.description = "A library for constructing fldigi network packets."

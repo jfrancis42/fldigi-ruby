@@ -14,6 +14,7 @@ require 'zlib'
 require 'base64'
 require 'time'
 require 'thread'
+require 'fldigi'
 
 HAMNET_FRAME_ACK=0
 HAMNET_FRAME_SIMPLE=1
@@ -178,25 +179,152 @@ class RxFrame < Frame
   end
 end
 
-def sendstring(from, to, type, text, max)
-  sequence=0
-  frames=Array.new()
-  done=false
+class Hamnet
+  attr_accessor :mycall, :dialfreq, :carrier, :modem
 
-  while text.length > max
-    chunk=text[0,max]
-    text=text[max,text.length-max]
-    if text.length==0
-      done=true
+  def initialize(mycall, dialfreq, carrier, modem)
+    @mycall=mycall.downcase
+    @dialfreq=dialfreq.to_f
+    @carrier=carrier.to_i
+    @modem=modem
+    @sequence=0
+
+    @queue_send=Array.new()
+    @queue_recv=Array.new()
+    @send_lock=Mutex.new()
+    @recv_lock=Mutex.new()
+    @seq_lock=Mutex.new()
+
+    @fldigi=Fldigi.new()
+
+    # May not need this. Seems to depend on ruby version.
+    #if !XMLRPC::Config::ENABLE_NIL_PARSER
+    #v, $VERBOSE=$VERBOSE, nil
+    #XMLRPC::Config::ENABLE_NIL_PARSER=true
+    #$VERBOSE=v
+    #end
+
+    # Light up FLDigi.
+    @fldigi.receive()
+    @fldigi.afc=false
+    @fldigi.modem=@modem
+    @fldigi.carrier=@carrier
+    @fldigi.clear_tx_data()
+    @fldigi.get_tx_data()
+    @fldigi.get_rx_data()
+    @fldigi.config()
+
+    # Crank up the main thread.
+    @loopthread=Thread.new { self.main_loop() }
+    @loopthread.abort_on_exception=true
+  end
+
+  def main_loop
+    rxdata=""
+    frame=nil
+    while true
+
+      # First, send any queued outgoing frames.
+      @send_lock.synchronize {
+        while @queue_send.length>0 do
+          f=@queue_send.shift
+          puts "Transmit frame:\n#{f.to_s}"
+          @fldigi.add_tx_string(f.to_s)
+          @fldigi.send_buffer(true)
+        end
+      }
+
+      # Get any new data from fldigi. Strip out any Unicode bullshit.
+      rx=@fldigi.get_rx_data()
+      rx.each_codepoint do |i|
+        if i>=32 and i<=126
+          rxdata=rxdata+i.chr
+        end
+      end
+
+      if rxdata.length>1024
+        l=rxdata.length
+        rxdata=rxdata[80,l-1024]
+      end
+
+      if rxdata.scan(/</).length==0
+        rxdata=""
+      elsif rxdata.scan(/<<</).length>0
+        rxdata=rxdata.match(/<<<.*/).to_s
+      end
+
+      # If there's a valid frame in there, process it.
+      if rxdata.match(/<<<.*>>>/).to_s.length>0
+        rawframe=rxdata.reverse.match(/>>>.*?<<</).to_s.reverse
+
+        # Parse the recieved frame.
+        if rawframe.length>0
+          frame=RxFrame.new(rawframe)
+
+          if frame.valid and frame.to==@mycall
+            @recv_lock.synchronize {
+              puts "Received valid frame with my call sign:"
+              p frame
+              @queue_recv.push(frame)
+            }
+          end
+
+          # Remove the frame text from the buffer.
+          rxdata.slice!(rawframe)
+        end
+      end
+
+      # If there's a valid ping frame in the recv_queue, remove it and
+      # generate a reply ping frame.
+      @recv_lock.synchronize {
+        if @queue_recv.length>0
+          puts "length:  #{@queue_recv.length}"
+          p @queue_recv
+          tmp_queue=Array.new()
+          @queue_recv.each do |tmpframe|
+            if tmpframe.type==HAMNET_FRAME_PING
+              self.send_frame(TxFrame.new(@mycall, tmpframe.from, HAMNET_FRAME_PING_REPLY, 0, @fldigi.radio_freq().to_s, true))
+            elsif tmpframe.type==HAMNET_FRAME_PING_REPLY
+              puts "Received a reply to our ping:"
+              p tmpframe
+            else
+              tmp_queue.push(tmpframe)
+            end
+          end
+          @queue_recv=tmp_queue
+        end
+      }
+
+      sleep 1
     end
-    frames.push(TxFrame.new(from, to, type, sequence, chunk, done))
-    sequence=sequence+1
   end
 
-  if text.length > 0
-    frames.push(TxFrame.new(from, to, type, sequence, text, true))
-    sequence=sequence+1
+  def send_frame(frame)
+    len=nil
+    @send_lock.synchronize {
+      @seq_lock.synchronize {
+        frame.sequence=@sequence
+        @sequence=@sequence+1
+        @queue_send.push(frame)
+        puts "Frame added to queue_send:\n#{frame.to_s}"
+        len=@queue_send.length
+      }
+    }
+    return(len)
   end
-  
-  return frames                
+
+  def recv_frame()
+    frame=nil
+    @recv_lock.synchronize {
+      if @queue_recv.length>0
+        frame=@queue_recv.shift
+      end
+    }
+    return(frame)
+  end
+
+  def ping(hiscall)
+    self.send_frame(TxFrame.new(@mycall, hiscall, HAMNET_FRAME_PING, 0, nil, true))
+    return(nil)
+  end
 end
