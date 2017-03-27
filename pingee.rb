@@ -1,4 +1,4 @@
-#!/usr/bin/ruby
+#!/usr/bin/env ruby
 # -*- coding: utf-8 -*-
 
 # <<<n0gq-7   n0gq-9   8400f6cf893a>>>

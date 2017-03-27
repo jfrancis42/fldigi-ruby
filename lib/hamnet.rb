@@ -7,8 +7,6 @@
 # ToDo:
 #
 # - escape <<< and >>> from data field.
-# - implement mutex-locked sequence numbers
-# - sequence number should not be arbitrary and/or user-supplied
 
 require 'zlib'
 require 'base64'
@@ -20,11 +18,12 @@ HAMNET_FRAME_ACK=0
 HAMNET_FRAME_SIMPLE=1
 HAMNET_FRAME_BASE64=2
 HAMNET_FRAME_COMPRESSED_BASE64=3
-# To do.
 HAMNET_FRAME_PING=4
 HAMNET_FRAME_PING_REPLY=5
-#HAMNET_FRAME_TELEMETRY=6
-#HAMNET_FRAME_POSITION=7
+HAMNET_FRAME_BEACON=6
+HAMNET_FRAME_GPS=7
+# To do.
+#HAMNET_FRAME_TELEMETRY=8
 
 # This defines a basic frame of data for use with fldigi.  The frame
 # consists of:
@@ -86,6 +85,10 @@ class TxFrame < Frame
 
     # Do the needful with the payload.
     case @type
+    when HAMNET_FRAME_BEACON
+      message=@frompad+@frompad+sprintf("%02x",sendtype).downcase+sprintf("%02x",0).downcase+"HamNet Beacon de "+@from+" at "+Time.now().to_i.to_s+" at "+@userdata+"hz"
+    when HAMNET_FRAME_GPS
+      message=@frompad+@frompad+sprintf("%02x",sendtype).downcase+sprintf("%02x",0).downcase+Time.now().to_i.to_s+":"+@lat.to_s+":"+@lon.to_s+":"+@alt.to_s+":"+@spd.to_s+":"+@crs.to_s
     when HAMNET_FRAME_PING
       message=@frompad+@topad+sprintf("%02x",sendtype).downcase+sprintf("%02x",@sequence).downcase
     when HAMNET_FRAME_PING_REPLY
@@ -151,6 +154,10 @@ class RxFrame < Frame
         @wiredata=wiredata
         # Decode the payload.
         case @type
+        when HAMNET_FRAME_BEACON
+          @userdata=tmp
+        when HAMNET_FRAME_GPS
+          @userdata=tmp
         when HAMNET_FRAME_PING
           @userdata=""
         when HAMNET_FRAME_PING_REPLY
@@ -182,12 +189,14 @@ end
 class Hamnet
   attr_accessor :mycall, :dialfreq, :carrier, :modem
 
-  def initialize(mycall, dialfreq, carrier, modem)
+  def initialize(mycall, dialfreq, carrier, modem, btime)
     @mycall=mycall.downcase
     @dialfreq=dialfreq.to_f
     @carrier=carrier.to_i
     @modem=modem
     @sequence=0
+    @btime=btime
+    @last_transmission=0
 
     @queue_send=Array.new()
     @queue_recv=Array.new()
@@ -220,6 +229,7 @@ class Hamnet
   end
 
   def main_loop
+    @last_transmission=Time.now().to_i-@btime+10
     rxdata=""
     frame=nil
     while true
@@ -261,12 +271,17 @@ class Hamnet
         if rawframe.length>0
           frame=RxFrame.new(rawframe)
 
-          if frame.valid and frame.to==@mycall
+          if frame.valid and (frame.to==@mycall or
+                              frame.type==HAMNET_FRAME_BEACON or
+                              frame.type==HAMNET_FRAME_GPS)
             @recv_lock.synchronize {
               puts "Received valid frame with my call sign:"
               p frame
               @queue_recv.push(frame)
             }
+          else
+            puts "Received an invalid frame (or not my call sign):"
+            p frame
           end
 
           # Remove the frame text from the buffer.
@@ -274,8 +289,9 @@ class Hamnet
         end
       end
 
-      # If there's a valid ping frame in the recv_queue, remove it and
-      # generate a reply ping frame.
+      # If there's a valid ping frame, ping reply frame, gps position
+      # frame, or beacon frame in the recv_queue, remove it and
+      # respond appropriately.
       @recv_lock.synchronize {
         if @queue_recv.length>0
           puts "length:  #{@queue_recv.length}"
@@ -285,7 +301,12 @@ class Hamnet
             if tmpframe.type==HAMNET_FRAME_PING
               self.send_frame(TxFrame.new(@mycall, tmpframe.from, HAMNET_FRAME_PING_REPLY, 0, @fldigi.radio_freq().to_s, true))
             elsif tmpframe.type==HAMNET_FRAME_PING_REPLY
-              puts "Received a reply to our ping:"
+              puts "Received a reply to our ping heard on #{tmpframe.userdata}hz:"
+              p tmpframe
+            elsif tmpframe.type==HAMNET_FRAME_BEACON
+              puts "Userdata: #{tmpframe.userdata}"
+              hz=(tmpframe.userdata).to_s.match(/\d*hz/).to_s.gsub(/hz/,'')
+              puts "Received a beacon on #{@fldigi.radio_freq().to_s}hz from #{tmpframe.from} (#{hz}hz : #{@fldigi.radio_freq().to_i-hz.to_i}):"
               p tmpframe
             else
               tmp_queue.push(tmpframe)
@@ -295,14 +316,27 @@ class Hamnet
         end
       }
 
+      # If @btime is not nil and it's been at least @btime seconds
+      # since the last time we transmitted, send a beacon.
+      if @btime
+        if Time.now().to_i-@last_transmission>=@btime
+          self.beacon()
+        end
+      end
+
       sleep 1
     end
   end
 
+  # We set @last_transmission twice.  The first time so it won't keep
+  # sending beacons if the lock is held by somebody else, then a
+  # second time to actually get the accurate send time.
   def send_frame(frame)
     len=nil
+    @last_transmission=Time.now().to_i
     @send_lock.synchronize {
       @seq_lock.synchronize {
+        @last_transmission=Time.now().to_i
         frame.sequence=@sequence
         @sequence=@sequence+1
         @queue_send.push(frame)
@@ -325,6 +359,11 @@ class Hamnet
 
   def ping(hiscall)
     self.send_frame(TxFrame.new(@mycall, hiscall, HAMNET_FRAME_PING, 0, nil, true))
+    return(nil)
+  end
+
+  def beacon()
+    self.send_frame(TxFrame.new(@mycall, @mycall, HAMNET_FRAME_BEACON, 0, @fldigi.radio_freq().to_s, true))
     return(nil)
   end
 end

@@ -1,4 +1,4 @@
-#fldigi-ruby
+# fldigi-ruby
 
 ===========
 
@@ -15,7 +15,7 @@ The best documentation has turned out to be reading the FLDigi source.
 This gem makes all of this just a bit easier to use.  I've also included a couple of demonstration clients.  The first client allows you to send CQ from the command line, or to send any arbitrary text, using whatever frequency, carrier, mode, and modem you wish.  The second client is a PropNET client written in ruby that uses FLDigi as a modem.  I was using the wrong CRC16 checksum (Did you know there's more than one?  I didn't, either).  I'm now getting valid decodes on the PropNET site, so I'm assuming I've finally got it right.  
 
 This code has been tested on Linux and OS/X, and so far, works perfectly.  I do not own or currently have access to a Windows box, so your mileage may vary there.  Please provide feedback for features and bugs.  My time is limited, but I'll do what I can.  My intent is that library calls won't change, only new calls will be added, but at this point, it's early enough in the development cycle that I can't promise that.  In fact I've already broken that promise at least once.  Turns out I didn't think through the freq() method well when I first started out.  Had to change it from a variable to a method, which would have broken any pre-existing code.  But it had to be done.  You can see what's changed from version to version by viewing the [NEWS](https://github.com/jfrancis42/fldigi-ruby/blob/master/NEWS) file.
-    
+
 There's a lot to be desired in things like validating and error-checking of user input.  For example, if you enter bogus fields for phg (for propnet), it'll either send bad data, or barf, depending on which value you hork up.  Input validation is on the very long list of To-Do items.
 
 ## First Things First
